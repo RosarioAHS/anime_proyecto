@@ -1,0 +1,103 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mis Valoraciones - Studio Ghibli{% endblock %}
+
+{% block body %}
+    <div class="container">
+        <div class="row mb-4">
+            <div class="col">
+                <h1 class="text-white">
+                    <i class="fas fa-star me-2"></i>Mis Valoraciones
+                </h1>
+                <p class="text-white-50">Todas las películas que has valorado</p>
+            </div>
+        </div>
+
+        {% if valoraciones is empty %}
+            <div class="card shadow-lg">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-inbox fa-4x text-muted mb-3"></i>
+                    <h4>No has valorado ninguna película aún</h4>
+                    <p class="text-muted">Explora el catálogo y comienza a valorar tus películas favoritas</p>
+                    <a href="{{ path('peliculas_index') }}" class="btn btn-primary mt-3">
+                        <i class="fas fa-film me-2"></i>Ver catálogo
+                    </a>
+                </div>
+            </div>
+        {% else %}
+            <div class="row row-cols-1 g-4">
+                {% for valoracion in valoraciones %}
+                    <div class="col">
+                        <div class="card shadow-lg">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-2">
+                                        {% if valoracion.pelicula.imagenUrl %}
+                                            <img src="{{ valoracion.pelicula.imagenUrl }}" class="img-fluid rounded" alt="{{ valoracion.pelicula.titulo }}">
+                                        {% else %}
+                                            <div class="bg-secondary text-white d-flex align-items-center justify-content-center rounded" style="height: 120px;">
+                                                <i class="fas fa-film fa-2x"></i>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-7">
+                                        <h5 class="card-title">
+                                            <a href="{{ path('peliculas_show', {'id': valoracion.pelicula.id}) }}" class="text-decoration-none">
+                                                {{ valoracion.pelicula.titulo }}
+                                            </a>
+                                        </h5>
+                                        <p class="text-muted mb-2">
+                                            <i class="fas fa-user-tie me-1"></i>{{ valoracion.pelicula.director }}
+                                            {% if valoracion.pelicula.anoLanzamiento %}
+                                                <span class="ms-3">
+                                                <i class="fas fa-calendar me-1"></i>{{ valoracion.pelicula.anoLanzamiento }}
+                                            </span>
+                                            {% endif %}
+                                        </p>
+
+                                        <div class="mb-2">
+                                        <span class="text-warning">
+                                            {% for i in 1..5 %}
+                                                {% if i <= valoracion.puntuacion %}
+                                                    <i class="fas fa-star"></i>
+                                                {% else %}
+                                                    <i class="far fa-star"></i>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </span>
+                                            <span class="ms-2">{{ valoracion.puntuacion|number_format(1) }}/5</span>
+                                        </div>
+
+                                        {% if valoracion.comentario %}
+                                            <p class="card-text">
+                                                <i class="fas fa-comment me-2"></i>{{ valoracion.comentario }}
+                                            </p>
+                                        {% endif %}
+
+                                        <small class="text-muted">
+                                            <i class="fas fa-clock me-1"></i>Valorado el {{ valoracion.creadoEn|date('d/m/Y H:i') }}
+                                        </small>
+                                    </div>
+                                    <div class="col-md-3 text-end">
+                                        <a href="{{ path('valoraciones_editar', {'id': valoracion.id}) }}" class="btn btn-warning btn-sm mb-2">
+                                            <i class="fas fa-edit me-1"></i>Editar
+                                        </a>
+                                        <a href="{{ path('peliculas_show', {'id': valoracion.pelicula.id}) }}" class="btn btn-primary btn-sm">
+                                            <i class="fas fa-eye me-1"></i>Ver película
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <div class="mt-4">
+                <div class="alert alert-info">
+                    <strong><i class="fas fa-info-circle me-2"></i>Total:</strong> {{ valoraciones|length }} películas valoradas
+                </div>
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}

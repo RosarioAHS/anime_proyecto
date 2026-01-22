@@ -1,0 +1,96 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Iniciar Sesión - Studio Ghibli{% endblock %}
+
+{% block body %}
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="card mt-5">
+                <div class="card-body p-5">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-film fa-3x text-primary mb-3"></i>
+                        <h2 class="card-title">Iniciar Sesión</h2>
+                        <p class="text-muted">Accede a tu cuenta de Studio Ghibli</p>
+                    </div>
+
+                    {% if error %}
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            {{ error.messageKey|trans(error.messageData, 'security') }}
+                        </div>
+                    {% endif %}
+
+                    <form method="post">
+                        <div class="mb-3">
+                            <label for="inputEmail" class="form-label">
+                                <i class="fas fa-envelope me-1"></i>Correo Electrónico
+                            </label>
+                            <input
+                                type="email"
+                                value="{{ last_username }}"
+                                name="_username"
+                                id="inputEmail"
+                                class="form-control"
+                                autocomplete="email"
+                                required
+                                autofocus
+                                placeholder="tu@email.com"
+                            >
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="inputPassword" class="form-label">
+                                <i class="fas fa-lock me-1"></i>Contraseña
+                            </label>
+                            <input
+                                type="password"
+                                name="_password"
+                                id="inputPassword"
+                                class="form-control"
+                                autocomplete="current-password"
+                                required
+                                placeholder="Tu contraseña"
+                            >
+                        </div>
+
+                        <div class="mb-3 form-check">
+                            <input
+                                type="checkbox"
+                                class="form-check-input"
+                                id="_remember_me"
+                                name="_remember_me"
+                            >
+                            <label class="form-check-label" for="_remember_me">
+                                Recordarme
+                            </label>
+                        </div>
+
+                        <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+
+                        <div class="d-grid mb-3">
+                            <button class="btn btn-ghibli btn-lg" type="submit">
+                                <i class="fas fa-sign-in-alt me-2"></i>Iniciar Sesión
+                            </button>
+                        </div>
+
+                        <div class="text-center">
+                            <p class="mb-0">
+                                ¿No tienes cuenta?
+                                <a href="{{ path('app_registro') }}" class="text-decoration-none fw-bold">
+                                    Regístrate aquí
+                                </a>
+                            </p>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Credenciales de prueba (Remover en producción) -->
+            <div class="alert alert-info mt-3">
+                <strong><i class="fas fa-info-circle me-2"></i>Cuenta de prueba:</strong><br>
+                <strong>Admin:</strong> admin@studioghibli.com / admin123<br>
+                <em class="small">O regístrate para crear tu cuenta</em>
+            </div>
+        </div>
+    </div>
+{% endblock %}

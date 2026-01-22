@@ -1,0 +1,159 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ pelicula.titulo }} - Studio Ghibli{% endblock %}
+
+{% block body %}
+    <div class="container">
+        <div class="row">
+            <!-- Columna izquierda: Imagen y datos básicos -->
+            <div class="col-md-4">
+                <div class="card shadow-lg">
+                    {% if pelicula.imagenUrl %}
+                        <img src="{{ pelicula.imagenUrl }}" class="card-img-top" alt="{{ pelicula.titulo }}">
+                    {% else %}
+                        <div class="bg-secondary text-white d-flex align-items-center justify-content-center" style="height: 500px;">
+                            <i class="fas fa-film fa-5x"></i>
+                        </div>
+                    {% endif %}
+
+                    <div class="card-body">
+                        <h3 class="card-title">{{ pelicula.titulo }}</h3>
+
+                        <div class="mb-3">
+                            <p class="mb-1"><strong><i class="fas fa-user-tie me-2"></i>Director:</strong> {{ pelicula.director }}</p>
+                            {% if pelicula.productor %}
+                                <p class="mb-1"><strong><i class="fas fa-briefcase me-2"></i>Productor:</strong> {{ pelicula.productor }}</p>
+                            {% endif %}
+                            {% if pelicula.anoLanzamiento %}
+                                <p class="mb-1"><strong><i class="fas fa-calendar me-2"></i>Año:</strong> {{ pelicula.anoLanzamiento }}</p>
+                            {% endif %}
+                            {% if pelicula.duracion %}
+                                <p class="mb-1"><strong><i class="fas fa-clock me-2"></i>Duración:</strong> {{ pelicula.duracion }} min</p>
+                            {% endif %}
+                        </div>
+
+                        <!-- Rating promedio -->
+                        <div class="text-center p-3 bg-light rounded">
+                            {% if pelicula.contadorRating > 0 %}
+                                <div class="mb-2">
+                                <span class="text-warning fs-3">
+                                    {% for i in 1..5 %}
+                                        {% if i <= pelicula.promedioRating %}
+                                            <i class="fas fa-star"></i>
+                                        {% elseif i - 0.5 <= pelicula.promedioRating %}
+                                            <i class="fas fa-star-half-alt"></i>
+                                        {% else %}
+                                            <i class="far fa-star"></i>
+                                        {% endif %}
+                                    {% endfor %}
+                                </span>
+                                </div>
+                                <h4 class="mb-0">{{ pelicula.promedioRating|number_format(1) }}/5.0</h4>
+                                <small class="text-muted">{{ pelicula.contadorRating }} valoraciones</small>
+                            {% else %}
+                                <p class="text-muted mb-0">
+                                    <i class="fas fa-star-half-alt me-2"></i>Sin valoraciones aún
+                                </p>
+                            {% endif %}
+                        </div>
+
+                        <!-- Botón de valorar -->
+                        {% if app.user %}
+                            {% if valoracion_usuario %}
+                                <a href="{{ path('valoraciones_editar', {'id': valoracion_usuario.id}) }}" class="btn btn-warning w-100 mt-3">
+                                    <i class="fas fa-edit me-2"></i>Editar mi valoración
+                                </a>
+                            {% else %}
+                                <a href="{{ path('valoraciones_crear', {'peliculaId': pelicula.id}) }}" class="btn btn-success w-100 mt-3">
+                                    <i class="fas fa-star me-2"></i>Valorar película
+                                </a>
+                            {% endif %}
+                        {% else %}
+                            <a href="{{ path('app_login') }}" class="btn btn-primary w-100 mt-3">
+                                <i class="fas fa-sign-in-alt me-2"></i>Inicia sesión para valorar
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Columna derecha: Descripción y valoraciones -->
+            <div class="col-md-8">
+                <div class="card shadow-lg mb-4">
+                    <div class="card-body">
+                        <h4 class="card-title mb-3">
+                            <i class="fas fa-info-circle me-2"></i>Sinopsis
+                        </h4>
+                        <p class="text-justify">{{ pelicula.descripcion }}</p>
+                    </div>
+                </div>
+
+                <!-- Valoraciones de usuarios -->
+                <div class="card shadow-lg">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="mb-0">
+                            <i class="fas fa-comments me-2"></i>Valoraciones de usuarios
+                            <span class="badge bg-light text-dark">{{ valoraciones|length }}</span>
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        {% if valoraciones is empty %}
+                            <div class="text-center text-muted py-5">
+                                <i class="fas fa-inbox fa-3x mb-3"></i>
+                                <p>Aún no hay valoraciones para esta película.</p>
+                                {% if app.user %}
+                                    <p>¡Sé el primero en valorarla!</p>
+                                {% endif %}
+                            </div>
+                        {% else %}
+                            {% for valoracion in valoraciones %}
+                                <div class="border-bottom pb-3 mb-3">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <h6 class="mb-1">
+                                                <i class="fas fa-user-circle me-2"></i>{{ valoracion.usuario.nombreUsuario }}
+                                            </h6>
+                                            <div class="text-warning mb-2">
+                                                {% for i in 1..5 %}
+                                                    {% if i <= valoracion.puntuacion %}
+                                                        <i class="fas fa-star"></i>
+                                                    {% else %}
+                                                        <i class="far fa-star"></i>
+                                                    {% endif %}
+                                                {% endfor %}
+                                                <span class="text-muted ms-2">{{ valoracion.puntuacion|number_format(1) }}/5</span>
+                                            </div>
+                                        </div>
+                                        <small class="text-muted">
+                                            <i class="fas fa-clock me-1"></i>{{ valoracion.creadoEn|date('d/m/Y') }}
+                                        </small>
+                                    </div>
+                                    {% if valoracion.comentario %}
+                                        <p class="mb-0 mt-2">{{ valoracion.comentario }}</p>
+                                    {% else %}
+                                        <p class="text-muted fst-italic mb-0">Sin comentario</p>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <a href="{{ path('peliculas_index') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Volver al catálogo
+            </a>
+        </div>
+    </div>
+
+    {% block stylesheets %}
+        {{ parent() }}
+        <style>
+            .text-justify {
+                text-align: justify;
+            }
+        </style>
+    {% endblock %}
+{% endblock %}

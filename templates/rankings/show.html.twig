@@ -1,0 +1,189 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ ranking.nombreRanking }} - Studio Ghibli{% endblock %}
+
+{% block body %}
+    <div class="container">
+        <div class="card shadow-lg mb-4">
+            <div class="card-header bg-gradient text-white" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h2 class="mb-1">
+                            <i class="fas fa-trophy me-2"></i>{{ ranking.nombreRanking }}
+                        </h2>
+                        <p class="mb-0">
+                            <i class="fas fa-user me-2"></i>Por {{ ranking.usuario.nombreUsuario }}
+                            <span class="ms-3">
+                            <i class="fas fa-calendar me-1"></i>{{ ranking.creadoEn|date('d/m/Y') }}
+                        </span>
+                        </p>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        {% if ranking.publico %}
+                            <span class="badge bg-success fs-6">
+                            <i class="fas fa-globe me-1"></i>Público
+                        </span>
+                        {% else %}
+                            <span class="badge bg-secondary fs-6">
+                            <i class="fas fa-lock me-1"></i>Privado
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            {% if ranking.descripcion %}
+                <div class="card-body bg-light">
+                    <p class="mb-0 text-muted">{{ ranking.descripcion }}</p>
+                </div>
+            {% endif %}
+        </div>
+
+        {% if ranking.usuario == app.user %}
+            <div class="mb-4">
+                <a href="{{ path('rankings_gestionar', {'id': ranking.id}) }}" class="btn btn-primary">
+                    <i class="fas fa-cog me-2"></i>Gestionar ranking
+                </a>
+                <a href="{{ path('rankings_editar', {'id': ranking.id}) }}" class="btn btn-warning">
+                    <i class="fas fa-edit me-2"></i>Editar información
+                </a>
+                <a href="{{ path('rankings_index') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Mis rankings
+                </a>
+            </div>
+        {% else %}
+            <div class="mb-4">
+                <a href="{{ path('rankings_publicos') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Ver más rankings públicos
+                </a>
+            </div>
+        {% endif %}
+
+        {% if ranking.rankingPeliculas is empty %}
+            <div class="card shadow-lg">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-inbox fa-4x text-muted mb-3"></i>
+                    <h4>Este ranking aún no tiene películas</h4>
+                    {% if ranking.usuario == app.user %}
+                        <p class="text-muted">Comienza a añadir películas a tu ranking</p>
+                        <a href="{{ path('rankings_gestionar', {'id': ranking.id}) }}" class="btn btn-primary mt-3">
+                            <i class="fas fa-plus me-2"></i>Añadir películas
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        {% else %}
+            <div class="row">
+                {% for rp in ranking.rankingPeliculas %}
+                    <div class="col-md-12 mb-4">
+                        <div class="card shadow-lg ranking-card">
+                            <div class="card-body">
+                                <div class="row align-items-center">
+                                    <div class="col-auto">
+                                        <div class="position-medal">
+                                            {% if rp.posicion == 1 %}
+                                                <i class="fas fa-medal text-warning fs-1"></i>
+                                            {% elseif rp.posicion == 2 %}
+                                                <i class="fas fa-medal text-secondary fs-1"></i>
+                                            {% elseif rp.posicion == 3 %}
+                                                <i class="fas fa-medal text-bronze fs-1"></i>
+                                            {% else %}
+                                                <div class="position-number">{{ rp.posicion }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-auto">
+                                        <a href="{{ path('peliculas_show', {'id': rp.pelicula.id}) }}">
+                                            {% if rp.pelicula.imagenUrl %}
+                                                <img src="{{ rp.pelicula.imagenUrl }}"
+                                                     class="img-thumbnail shadow"
+                                                     style="width: 100px; height: 140px; object-fit: cover;">
+                                            {% else %}
+                                                <div class="bg-secondary text-white d-flex align-items-center justify-content-center shadow"
+                                                     style="width: 100px; height: 140px;">
+                                                    <i class="fas fa-film fa-2x"></i>
+                                                </div>
+                                            {% endif %}
+                                        </a>
+                                    </div>
+                                    <div class="col">
+                                        <h4 class="mb-2">
+                                            <a href="{{ path('peliculas_show', {'id': rp.pelicula.id}) }}" class="text-decoration-none">
+                                                {{ rp.pelicula.titulo }}
+                                            </a>
+                                        </h4>
+                                        <p class="text-muted mb-2">
+                                            <i class="fas fa-user-tie me-2"></i>{{ rp.pelicula.director }}
+                                            {% if rp.pelicula.anoLanzamiento %}
+                                                <span class="ms-3">
+                                                <i class="fas fa-calendar me-1"></i>{{ rp.pelicula.anoLanzamiento }}
+                                            </span>
+                                            {% endif %}
+                                        </p>
+
+                                        <!-- Rating de la película -->
+                                        {% if rp.pelicula.contadorRating > 0 %}
+                                            <div class="mb-2">
+                                            <span class="text-warning">
+                                                {% for i in 1..5 %}
+                                                    {% if i <= rp.pelicula.promedioRating %}
+                                                        <i class="fas fa-star"></i>
+                                                    {% elseif i - 0.5 <= rp.pelicula.promedioRating %}
+                                                        <i class="fas fa-star-half-alt"></i>
+                                                    {% else %}
+                                                        <i class="far fa-star"></i>
+                                                    {% endif %}
+                                                {% endfor %}
+                                            </span>
+                                                <span class="ms-2">{{ rp.pelicula.promedioRating|number_format(1) }}/5</span>
+                                            </div>
+                                        {% endif %}
+
+                                        {% if rp.notaPersonal %}
+                                            <p class="card-text fst-italic">
+                                                <i class="fas fa-quote-left me-2"></i>{{ rp.notaPersonal }}
+                                            </p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+
+    {% block stylesheets %}
+        {{ parent() }}
+        <style>
+            .position-medal {
+                width: 60px;
+                text-align: center;
+            }
+            .position-number {
+                width: 50px;
+                height: 50px;
+                border-radius: 50%;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-weight: bold;
+                font-size: 1.5rem;
+                box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            }
+            .text-bronze {
+                color: #cd7f32;
+            }
+            .ranking-card {
+                transition: all 0.3s;
+            }
+            .ranking-card:hover {
+                transform: translateX(10px);
+                box-shadow: 0 10px 30px rgba(0,0,0,0.3) !important;
+            }
+        </style>
+    {% endblock %}
+{% endblock %}

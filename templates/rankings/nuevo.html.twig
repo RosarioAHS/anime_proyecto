@@ -1,0 +1,64 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Crear Ranking - Studio Ghibli{% endblock %}
+
+{% block body %}
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card shadow-lg">
+                    <div class="card-header bg-success text-white">
+                        <h3 class="mb-0">
+                            <i class="fas fa-plus me-2"></i>Crear Nuevo Ranking
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Un ranking es una lista personalizada donde puedes ordenar tus películas favoritas.
+                            Después de crearlo, podrás añadir películas que hayas valorado.
+                        </div>
+
+                        {{ form_start(form) }}
+
+                        <div class="mb-3">
+                            {{ form_label(form.nombreRanking, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
+                            {{ form_widget(form.nombreRanking) }}
+                            {{ form_errors(form.nombreRanking) }}
+                            <small class="form-text text-muted">
+                                Ejemplos: "Mis favoritas de Miyazaki", "Las más tristes", "Películas para niños"
+                            </small>
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form_label(form.descripcion, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
+                            {{ form_widget(form.descripcion) }}
+                            {{ form_errors(form.descripcion) }}
+                        </div>
+
+                        <div class="mb-4">
+                            <div class="form-check">
+                                {{ form_widget(form.publico) }}
+                                {{ form_label(form.publico) }}
+                            </div>
+                            <small class="form-text text-muted">
+                                Los rankings públicos podrán ser vistos por otros usuarios
+                            </small>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-save me-2"></i>Crear ranking
+                            </button>
+                            <a href="{{ path('rankings_index') }}" class="btn btn-secondary">
+                                <i class="fas fa-times me-2"></i>Cancelar
+                            </a>
+                        </div>
+
+                        {{ form_end(form) }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

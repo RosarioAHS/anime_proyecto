@@ -6,16 +6,16 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
-#[Route('/ranking-peliculas')]
-class RankingPeliculasController extends AbstractController
+#[Route('/perfil')]
+class PerfilController extends AbstractController
 {
-    #[Route('/', name: 'ranking_peliculas_index')]
+    #[Route('/', name: 'perfil_index')]
     public function index(): Response
     {
         $this->denyAccessUnlessGranted('ROLE_USER');
 
-        return $this->render('ranking_peliculas/index.html.twig', [
-            'message' => 'Próximamente: Gestión de películas en rankings'
+        return $this->render('perfil/index.html.twig', [
+            'message' => 'Próximamente: Mi Perfil'
         ]);
     }
 }

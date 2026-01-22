@@ -1,0 +1,243 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Gestionar {{ ranking.nombreRanking }} - Studio Ghibli{% endblock %}
+
+{% block body %}
+    <div class="container">
+        <div class="mb-4">
+            <h1 class="text-white">
+                <i class="fas fa-cog me-2"></i>Gestionar: {{ ranking.nombreRanking }}
+            </h1>
+            <p class="text-white-50">Añade, elimina y reordena películas en tu ranking</p>
+        </div>
+
+        <div class="row">
+            <!-- Columna izquierda: Películas en el ranking -->
+            <div class="col-md-7">
+                <div class="card shadow-lg">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-list-ol me-2"></i>Películas en el ranking
+                            <span class="badge bg-light text-dark">{{ ranking.rankingPeliculas|length }}</span>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% if ranking.rankingPeliculas is empty %}
+                            <div class="text-center text-muted py-5">
+                                <i class="fas fa-inbox fa-3x mb-3"></i>
+                                <p>No hay películas en este ranking aún</p>
+                                <p class="small">Añade películas desde la columna de la derecha</p>
+                            </div>
+                        {% else %}
+                            <div id="sortable-list">
+                                {% for rp in ranking.rankingPeliculas %}
+                                    <div class="ranking-item card mb-3" data-id="{{ rp.id }}">
+                                        <div class="card-body">
+                                            <div class="row align-items-center">
+                                                <div class="col-auto">
+                                                    <div class="position-badge">{{ rp.posicion }}</div>
+                                                </div>
+                                                <div class="col-auto">
+                                                    {% if rp.pelicula.imagenUrl %}
+                                                        <img src="{{ rp.pelicula.imagenUrl }}"
+                                                             class="img-thumbnail"
+                                                             style="width: 60px; height: 80px; object-fit: cover;">
+                                                    {% else %}
+                                                        <div class="bg-secondary text-white d-flex align-items-center justify-content-center"
+                                                             style="width: 60px; height: 80px;">
+                                                            <i class="fas fa-film"></i>
+                                                        </div>
+                                                    {% endif %}
+                                                </div>
+                                                <div class="col">
+                                                    <h6 class="mb-1">{{ rp.pelicula.titulo }}</h6>
+                                                    <small class="text-muted">
+                                                        <i class="fas fa-user-tie me-1"></i>{{ rp.pelicula.director }}
+                                                        {% if rp.pelicula.anoLanzamiento %}
+                                                            <span class="ms-2">
+                                                            <i class="fas fa-calendar me-1"></i>{{ rp.pelicula.anoLanzamiento }}
+                                                        </span>
+                                                        {% endif %}
+                                                    </small>
+                                                </div>
+                                                <div class="col-auto">
+                                                    <form method="post"
+                                                          action="{{ path('rankings_eliminar_pelicula', {'id': ranking.id, 'rankingPeliculaId': rp.id}) }}"
+                                                          class="d-inline">
+                                                        <input type="hidden" name="_token" value="{{ csrf_token('remove-movie-' ~ rp.id) }}">
+                                                        <button type="submit" class="btn btn-danger btn-sm"
+                                                                onclick="return confirm('¿Eliminar esta película del ranking?')">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </form>
+                                                    <div class="drag-handle ms-2">
+                                                        <i class="fas fa-grip-vertical"></i>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+
+                            <div class="alert alert-info mt-3">
+                                <i class="fas fa-hand-pointer me-2"></i>
+                                Arrastra las películas para cambiar el orden
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="mt-3">
+                    <a href="{{ path('rankings_show', {'id': ranking.id}) }}" class="btn btn-primary">
+                        <i class="fas fa-eye me-2"></i>Ver ranking
+                    </a>
+                    <a href="{{ path('rankings_index') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Mis rankings
+                    </a>
+                </div>
+            </div>
+
+            <!-- Columna derecha: Películas disponibles para añadir -->
+            <div class="col-md-5">
+                <div class="card shadow-lg">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-plus me-2"></i>Añadir películas
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% set peliculas_disponibles = [] %}
+                        {% for pelicula in peliculas_valoradas %}
+                            {% if pelicula.id not in peliculas_en_ranking %}
+                                {% set peliculas_disponibles = peliculas_disponibles|merge([pelicula]) %}
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if peliculas_disponibles is empty %}
+                            <div class="text-center text-muted py-4">
+                                <i class="fas fa-check-circle fa-3x mb-3"></i>
+                                <p>Ya añadiste todas tus películas valoradas</p>
+                                <a href="{{ path('peliculas_index') }}" class="btn btn-sm btn-primary">
+                                    <i class="fas fa-star me-1"></i>Valorar más películas
+                                </a>
+                            </div>
+                        {% else %}
+                            <p class="small text-muted mb-3">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Solo puedes añadir películas que hayas valorado
+                            </p>
+
+                            <div class="available-movies" style="max-height: 600px; overflow-y: auto;">
+                                {% for pelicula in peliculas_disponibles %}
+                                    <div class="card mb-2">
+                                        <div class="card-body p-2">
+                                            <div class="row align-items-center g-2">
+                                                <div class="col-auto">
+                                                    {% if pelicula.imagenUrl %}
+                                                        <img src="{{ pelicula.imagenUrl }}"
+                                                             class="img-thumbnail"
+                                                             style="width: 40px; height: 55px; object-fit: cover;">
+                                                    {% else %}
+                                                        <div class="bg-secondary text-white d-flex align-items-center justify-content-center"
+                                                             style="width: 40px; height: 55px; font-size: 10px;">
+                                                            <i class="fas fa-film"></i>
+                                                        </div>
+                                                    {% endif %}
+                                                </div>
+                                                <div class="col">
+                                                    <h6 class="mb-0 small">{{ pelicula.titulo }}</h6>
+                                                </div>
+                                                <div class="col-auto">
+                                                    <form method="post"
+                                                          action="{{ path('rankings_anadir_pelicula', {'id': ranking.id, 'peliculaId': pelicula.id}) }}"
+                                                          class="d-inline">
+                                                        <input type="hidden" name="_token" value="{{ csrf_token('add-movie-' ~ ranking.id) }}">
+                                                        <button type="submit" class="btn btn-success btn-sm">
+                                                            <i class="fas fa-plus"></i>
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% block stylesheets %}
+        {{ parent() }}
+        <style>
+            .ranking-item {
+                cursor: move;
+                transition: all 0.3s;
+            }
+            .ranking-item:hover {
+                box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            }
+            .position-badge {
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-weight: bold;
+                font-size: 1.2rem;
+            }
+            .drag-handle {
+                cursor: grab;
+                color: #6c757d;
+                display: inline-block;
+            }
+            .drag-handle:active {
+                cursor: grabbing;
+            }
+        </style>
+    {% endblock %}
+
+    {% block javascripts %}
+        {{ parent() }}
+        <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+        <script>
+            // Inicializar Sortable para reordenar
+            const sortableList = document.getElementById('sortable-list');
+            if (sortableList) {
+                new Sortable(sortableList, {
+                    animation: 150,
+                    handle: '.drag-handle',
+                    onEnd: function(evt) {
+                        // Recopilar nuevo orden
+                        const items = sortableList.querySelectorAll('.ranking-item');
+                        const orden = Array.from(items).map(item => item.dataset.id);
+
+                        // Enviar al servidor
+                        fetch('{{ path('rankings_reordenar', {'id': ranking.id}) }}', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({ orden: orden })
+                        })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    // Actualizar números de posición
+                                    items.forEach((item, index) => {
+                                        item.querySelector('.position-badge').textContent = index + 1;
+                                    });
+                                }
+                            });
+                    }
+                });
+            }
+        </script>
+    {% endblock %}
+{% endblock %}

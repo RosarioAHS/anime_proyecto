@@ -1,0 +1,87 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Registro - Studio Ghibli{% endblock %}
+
+{% block body %}
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="card mt-5">
+                <div class="card-body p-5">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-user-plus fa-3x text-primary mb-3"></i>
+                        <h2 class="card-title">Crear Cuenta</h2>
+                        <p class="text-muted">Únete a la comunidad de Studio Ghibli</p>
+                    </div>
+
+                    {{ form_start(registroForm) }}
+
+                    <div class="mb-3">
+                        {{ form_label(registroForm.nombreUsuario, null, {'label_attr': {'class': 'form-label'}}) }}
+                        {{ form_widget(registroForm.nombreUsuario) }}
+                        {{ form_errors(registroForm.nombreUsuario) }}
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form_label(registroForm.correoElectronico, null, {'label_attr': {'class': 'form-label'}}) }}
+                        {{ form_widget(registroForm.correoElectronico) }}
+                        {{ form_errors(registroForm.correoElectronico) }}
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form_label(registroForm.plainPassword.first, null, {'label_attr': {'class': 'form-label'}}) }}
+                        {{ form_widget(registroForm.plainPassword.first) }}
+                        {{ form_errors(registroForm.plainPassword.first) }}
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form_label(registroForm.plainPassword.second, null, {'label_attr': {'class': 'form-label'}}) }}
+                        {{ form_widget(registroForm.plainPassword.second) }}
+                        {{ form_errors(registroForm.plainPassword.second) }}
+                    </div>
+
+                    <div class="d-grid mb-3">
+                        <button type="submit" class="btn btn-ghibli btn-lg">
+                            <i class="fas fa-user-plus me-2"></i>Crear Cuenta
+                        </button>
+                    </div>
+
+                    {{ form_end(registroForm) }}
+
+                    <div class="text-center">
+                        <p class="mb-0">
+                            ¿Ya tienes cuenta?
+                            <a href="{{ path('app_login') }}" class="text-decoration-none fw-bold">
+                                Inicia sesión aquí
+                            </a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Información adicional -->
+            <div class="alert alert-success mt-3">
+                <strong><i class="fas fa-check-circle me-2"></i>Beneficios de registrarte:</strong>
+                <ul class="mb-0 mt-2">
+                    <li>Valora y comenta películas</li>
+                    <li>Crea rankings personalizados</li>
+                    <li>Guarda tus favoritas</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    {% block stylesheets %}
+        {{ parent() }}
+        <style>
+            .form-error {
+                color: #dc3545;
+                font-size: 0.875rem;
+                margin-top: 0.25rem;
+            }
+
+            .form-control.is-invalid {
+                border-color: #dc3545;
+            }
+        </style>
+    {% endblock %}
+{% endblock %}

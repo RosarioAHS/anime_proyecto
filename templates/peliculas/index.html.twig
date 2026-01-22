@@ -1,0 +1,109 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Películas - Studio Ghibli{% endblock %}
+
+{% block body %}
+    <div class="container">
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <h1 class="text-white">
+                    <i class="fas fa-film me-2"></i>Películas de Studio Ghibli
+                </h1>
+                <p class="text-white-50">Explora y valora las mejores películas de animación</p>
+            </div>
+            <div class="col-md-4 text-end">
+                {% if is_granted('ROLE_ADMIN') %}
+                    <a href="{{ path('peliculas_importar') }}" class="btn btn-warning">
+                        <i class="fas fa-download me-2"></i>Importar desde API
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if peliculas is empty %}
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                No hay películas disponibles.
+                {% if is_granted('ROLE_ADMIN') %}
+                    <a href="{{ path('peliculas_importar') }}" class="alert-link">Haz clic aquí para importar películas desde la API.</a>
+                {% endif %}
+            </div>
+        {% else %}
+            <div class="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-4">
+                {% for pelicula in peliculas %}
+                    <div class="col">
+                        <div class="card h-100 shadow-sm hover-shadow">
+                            {% if pelicula.imagenUrl %}
+                                <img src="{{ pelicula.imagenUrl }}" class="card-img-top" alt="{{ pelicula.titulo }}" style="height: 300px; object-fit: cover;">
+                            {% else %}
+                                <div class="bg-secondary text-white d-flex align-items-center justify-content-center" style="height: 300px;">
+                                    <i class="fas fa-film fa-4x"></i>
+                                </div>
+                            {% endif %}
+
+                            <div class="card-body d-flex flex-column">
+                                <h5 class="card-title">{{ pelicula.titulo }}</h5>
+
+                                <p class="text-muted small mb-2">
+                                    <i class="fas fa-user me-1"></i>{{ pelicula.director }}<br>
+                                    {% if pelicula.anoLanzamiento %}
+                                        <i class="fas fa-calendar me-1"></i>{{ pelicula.anoLanzamiento }}
+                                    {% endif %}
+                                </p>
+
+                                <!-- Rating -->
+                                <div class="mb-2">
+                                    {% if pelicula.contadorRating > 0 %}
+                                        <div class="d-flex align-items-center">
+                                        <span class="text-warning me-2">
+                                            {% for i in 1..5 %}
+                                                {% if i <= pelicula.promedioRating %}
+                                                    <i class="fas fa-star"></i>
+                                                {% elseif i - 0.5 <= pelicula.promedioRating %}
+                                                    <i class="fas fa-star-half-alt"></i>
+                                                {% else %}
+                                                    <i class="far fa-star"></i>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </span>
+                                            <small class="text-muted">
+                                                {{ pelicula.promedioRating|number_format(1) }}
+                                                ({{ pelicula.contadorRating }} valoraciones)
+                                            </small>
+                                        </div>
+                                    {% else %}
+                                        <small class="text-muted">
+                                            <i class="fas fa-star-half-alt me-1"></i>Sin valoraciones aún
+                                        </small>
+                                    {% endif %}
+                                </div>
+
+                                <a href="{{ path('peliculas_show', {'id': pelicula.id}) }}" class="btn btn-primary mt-auto">
+                                    <i class="fas fa-eye me-1"></i>Ver detalles
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+
+    {% block stylesheets %}
+        {{ parent() }}
+        <style>
+            .hover-shadow {
+                transition: all 0.3s ease;
+            }
+            .hover-shadow:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 10px 30px rgba(0,0,0,0.3) !important;
+            }
+            .card-title {
+                font-size: 1.1rem;
+                font-weight: bold;
+                min-height: 50px;
+            }
+        </style>
+    {% endblock %}
+{% endblock %}
