@@ -1,7 +1,113 @@
 {% extends 'base.html.twig' %}
 
+{% block title %}Gestionar Películas - Admin{% endblock %}
+
 {% block body %}
-    <div class="container mt-5">
-        <h1 class="text-white">{{ message }}</h1>
+    <div class="container">
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <h1 class="text-white">
+                    <i class="fas fa-film me-2"></i>Gestión de Películas
+                </h1>
+                <p class="text-white-50">Administra el catálogo de películas</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <a href="{{ path('admin_peliculas_nueva') }}" class="btn btn-success">
+                    <i class="fas fa-plus me-2"></i>Añadir película
+                </a>
+                <a href="{{ path('peliculas_importar') }}" class="btn btn-warning">
+                    <i class="fas fa-download me-2"></i>Importar de API
+                </a>
+                <a href="{{ path('admin_dashboard') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Dashboard
+                </a>
+            </div>
+        </div>
+
+        <div class="card shadow-lg">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Imagen</th>
+                            <th>Título</th>
+                            <th>Director</th>
+                            <th>Año</th>
+                            <th>Rating</th>
+                            <th>Valoraciones</th>
+                            <th>Acciones</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for pelicula in peliculas %}
+                            <tr>
+                                <td>{{ pelicula.id }}</td>
+                                <td>
+                                    {% if pelicula.imagenUrl %}
+                                        <img src="{{ pelicula.imagenUrl }}"
+                                             class="img-thumbnail"
+                                             style="width: 50px; height: 70px; object-fit: cover;">
+                                    {% else %}
+                                        <div class="bg-secondary text-white d-flex align-items-center justify-content-center"
+                                             style="width: 50px; height: 70px; font-size: 12px;">
+                                            <i class="fas fa-film"></i>
+                                        </div>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <strong>{{ pelicula.titulo }}</strong><br>
+                                    <small class="text-muted">{{ pelicula.ghibliId }}</small>
+                                </td>
+                                <td>{{ pelicula.director }}</td>
+                                <td>{{ pelicula.anoLanzamiento ?? '-' }}</td>
+                                <td>
+                                    <span class="text-warning">
+                                        {% if pelicula.promedioRating > 0 %}
+                                            <i class="fas fa-star"></i> {{ pelicula.promedioRating|number_format(1) }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-primary">{{ pelicula.contadorRating }}</span>
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{{ path('peliculas_show', {'id': pelicula.id}) }}"
+                                           class="btn btn-info" title="Ver">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{{ path('admin_peliculas_editar', {'id': pelicula.id}) }}"
+                                           class="btn btn-warning" title="Editar">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <form method="post"
+                                              action="{{ path('admin_peliculas_eliminar', {'id': pelicula.id}) }}"
+                                              class="d-inline"
+                                              onsubmit="return confirm('¿Eliminar esta película? Se perderán todas las valoraciones asociadas.');">
+                                            <input type="hidden" name="_token" value="{{ csrf_token('delete-pelicula-' ~ pelicula.id) }}">
+                                            <button type="submit" class="btn btn-danger btn-sm" title="Eliminar">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="8" class="text-center text-muted py-4">
+                                    <i class="fas fa-inbox fa-3x mb-3 d-block"></i>
+                                    No hay películas en el sistema
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
 {% endblock %}
