@@ -11,6 +11,12 @@ class HomeController extends AbstractController
     #[Route('/', name: 'home')]
     public function index(): Response
     {
-        return $this->redirectToRoute('peliculas_index');
+        // Si el usuario está autenticado, enviarlo a películas
+        // Si no, enviarlo a login
+        if ($this->getUser()) {
+            return $this->redirectToRoute('peliculas_index');
+        }
+
+        return $this->redirectToRoute('app_login');
     }
 }

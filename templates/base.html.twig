@@ -82,8 +82,11 @@
                             <i class="fas fa-cog me-1"></i>Administración
                         </a>
                         <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="{{ path('admin_peliculas') }}">Gestionar Películas</a></li>
-                            <li><a class="dropdown-item" href="{{ path('admin_estadisticas') }}">Estadísticas</a></li>
+                            <li><a class="dropdown-item" href="{{ path('admin_dashboard') }}"><i class="fas fa-tachometer-alt me-2"></i>Dashboard</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{{ path('admin_peliculas') }}"><i class="fas fa-film me-2"></i>Gestionar Películas</a></li>
+                            <li><a class="dropdown-item" href="{{ path('admin_estadisticas') }}"><i class="fas fa-chart-bar me-2"></i>Estadísticas</a></li>
+                            <li><a class="dropdown-item" href="{{ path('admin_usuarios') }}"><i class="fas fa-users me-2"></i>Usuarios</a></li>
                         </ul>
                     </li>
                 {% endif %}
@@ -139,8 +142,12 @@
 <!-- Footer -->
 <footer class="bg-dark text-white text-center py-3 mt-5">
     <div class="container">
-        <p class="mb-0">
-            <i class="fas fa-heart text-danger"></i> Studio Ghibli
+        <p class="mb-1">
+            <i class="fas fa-heart text-danger"></i> Studio Ghibli Ratings
+        </p>
+        <p class="mb-0 small text-muted">
+            Proyecto Integrado II - Desarrollo Web Entorno Servidor<br>
+            Creado por [TU NOMBRE] - SAFA Nuestra Señora de los Reyes - 2026
         </p>
     </div>
 </footer>

@@ -205,35 +205,47 @@
 
     {% block javascripts %}
         {{ parent() }}
+
+        <!-- Sortable.js: librería para hacer drag and drop -->
+        <!-- La encontré en GitHub es muy popular para esto -->
+
         <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
         <script>
-            // Inicializar Sortable para reordenar
+            // Función para hacer que las películas se puedan arrastrar
+            // Me costó entender esto, tuve que ver varios ejemplos
             const sortableList = document.getElementById('sortable-list');
+
             if (sortableList) {
+                // Inicializo Sortable.js
                 new Sortable(sortableList, {
-                    animation: 150,
-                    handle: '.drag-handle',
+                    animation: 150, // Velocidad de la animación
+                    handle: '.drag-handle', // Solo se puede arrastrar desde el icono
+
+                    // Cuando termino de arrastrar, actualizo el orden en la base de datos
                     onEnd: function(evt) {
-                        // Recopilar nuevo orden
+                        // Obtengo todas las películas del ranking
                         const items = sortableList.querySelectorAll('.ranking-item');
+
+                        // Creo un array con los IDs en el nuevo orden
                         const orden = Array.from(items).map(item => item.dataset.id);
 
-                        // Enviar al servidor
+                        // Envío el nuevo orden al servidor con fetch
+                        // Esto fue lo más complicado, tuve que investigar cómo usar fetch
                         fetch('{{ path('rankings_reordenar', {'id': ranking.id}) }}', {
                             method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify({ orden: orden })
-                        })
+                            headers: {'Content-Type': 'application/json',}, body: JSON.stringify({ orden: orden })})
                             .then(response => response.json())
                             .then(data => {
                                 if (data.success) {
-                                    // Actualizar números de posición
+                                    // Actualizo los números de posición visualmente
                                     items.forEach((item, index) => {
                                         item.querySelector('.position-badge').textContent = index + 1;
                                     });
                                 }
+                            })
+                            .catch(error => {
+                                // Si hay error, lo muestro en la consola
+                                console.error('Error:', error);
                             });
                     }
                 });

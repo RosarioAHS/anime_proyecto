@@ -1,0 +1,79 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ pelicula ? 'Editar' : 'Nueva' }} Película - Admin{% endblock %}
+
+{% block body %}
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card shadow-lg">
+                    <div class="card-header {{ pelicula ? 'bg-warning' : 'bg-success' }} text-white">
+                        <h3 class="mb-0">
+                            <i class="fas fa-{{ pelicula ? 'edit' : 'plus' }} me-2"></i>
+                            {{ pelicula ? 'Editar' : 'Nueva' }} Película
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        {{ form_start(form) }}
+
+                        <div class="row">
+                            <div class="col-md-8 mb-3">
+                                {{ form_label(form.titulo, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
+                                {{ form_widget(form.titulo) }}
+                                {{ form_errors(form.titulo) }}
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                {{ form_label(form.anoLanzamiento, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
+                                {{ form_widget(form.anoLanzamiento) }}
+                                {{ form_errors(form.anoLanzamiento) }}
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form_label(form.director, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
+                                {{ form_widget(form.director) }}
+                                {{ form_errors(form.director) }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                {{ form_label(form.productor, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
+                                {{ form_widget(form.productor) }}
+                                {{ form_errors(form.productor) }}
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form_label(form.duracion, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
+                            {{ form_widget(form.duracion) }}
+                            {{ form_errors(form.duracion) }}
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form_label(form.descripcion, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
+                            {{ form_widget(form.descripcion) }}
+                            {{ form_errors(form.descripcion) }}
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form_label(form.imagenUrl, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
+                            {{ form_widget(form.imagenUrl) }}
+                            {{ form_errors(form.imagenUrl) }}
+                            <small class="form-text text-muted">URL completa de la imagen (https://...)</small>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-{{ pelicula ? 'warning' : 'success' }}">
+                                <i class="fas fa-save me-2"></i>{{ pelicula ? 'Actualizar' : 'Crear' }} película
+                            </button>
+                            <a href="{{ path('admin_peliculas') }}" class="btn btn-secondary">
+                                <i class="fas fa-times me-2"></i>Cancelar
+                            </a>
+                        </div>
+
+                        {{ form_end(form) }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

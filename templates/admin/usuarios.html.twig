@@ -1,0 +1,100 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Gestionar Usuarios - Admin{% endblock %}
+
+{% block body %}
+    <div class="container">
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <h1 class="text-white">
+                    <i class="fas fa-users me-2"></i>Gestión de Usuarios
+                </h1>
+                <p class="text-white-50">Listado de todos los usuarios del sistema</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <a href="{{ path('admin_dashboard') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Dashboard
+                </a>
+            </div>
+        </div>
+
+        <div class="card shadow-lg">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre de Usuario</th>
+                            <th>Correo Electrónico</th>
+                            <th>Rol</th>
+                            <th>Fecha de Registro</th>
+                            <th>Valoraciones</th>
+                            <th>Rankings</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for usuario in usuarios %}
+                            <tr>
+                                <td>{{ usuario.id }}</td>
+                                <td>
+                                    <i class="fas fa-user-circle me-2"></i>
+                                    <strong>{{ usuario.nombreUsuario }}</strong>
+                                </td>
+                                <td>{{ usuario.correoElectronico }}</td>
+                                <td>
+                                    {% if usuario.rol.value == 'ADMIN' %}
+                                        <span class="badge bg-danger">
+                                            <i class="fas fa-crown me-1"></i>ADMIN
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-primary">
+                                            <i class="fas fa-user me-1"></i>USER
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <small class="text-muted">
+                                        {{ usuario.creadoEn|date('d/m/Y H:i') }}
+                                    </small>
+                                </td>
+                                <td>
+                                    <span class="badge bg-warning">
+                                        <i class="fas fa-star me-1"></i>{{ usuario.valoraciones|length }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-info">
+                                        <i class="fas fa-list me-1"></i>{{ usuario.rankings|length }}
+                                    </span>
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="7" class="text-center text-muted py-4">
+                                    No hay usuarios en el sistema
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card-footer">
+                <div class="row">
+                    <div class="col-md-4">
+                        <strong>Total de usuarios:</strong> {{ usuarios|length }}
+                    </div>
+                    <div class="col-md-4">
+                        <strong>Administradores:</strong>
+                        {{ usuarios|filter(u => u.rol.value == 'ADMIN')|length }}
+                    </div>
+                    <div class="col-md-4">
+                        <strong>Usuarios normales:</strong>
+                        {{ usuarios|filter(u => u.rol.value == 'USER')|length }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

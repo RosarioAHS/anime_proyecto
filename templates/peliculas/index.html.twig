@@ -92,13 +92,13 @@
     {% block stylesheets %}
         {{ parent() }}
         <style>
-            .hover-shadow {
-                transition: all 0.3s ease;
-            }
+            /* Añadí una sombra cuando pasas el mouse por encima */
+            /* Lo encontré en un tutorial de Bootstrap */
             .hover-shadow:hover {
-                transform: translateY(-5px);
-                box-shadow: 0 10px 30px rgba(0,0,0,0.3) !important;
+                box-shadow: 0 5px 15px rgba(0,0,0,0.3) !important;
             }
+
+            /* Me costó centrar el título, probé varias cosas */
             .card-title {
                 font-size: 1.1rem;
                 font-weight: bold;
