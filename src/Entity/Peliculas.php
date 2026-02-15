@@ -3,6 +3,7 @@
 namespace App\Entity;
 
 use App\Repository\PeliculasRepository;
+use App\Entity\Categorias;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
@@ -52,6 +53,10 @@ class Peliculas
 
     #[ORM\Column]
     private ?\DateTimeImmutable $actualizadoEn = null;
+
+    #[ORM\ManyToOne(targetEntity: Categorias::class, inversedBy: 'peliculas')]
+    #[ORM\JoinColumn(name: 'id_categoria', nullable: false)]
+    private ?Categorias $categoria = null;
 
     #[ORM\OneToMany(targetEntity: Valoraciones::class, mappedBy: 'pelicula', orphanRemoval: true)]
     private Collection $valoraciones;
@@ -204,9 +209,17 @@ class Peliculas
         return $this;
     }
 
-    /**
-     * @return Collection<int, Valoraciones>
-     */
+    public function getCategoria(): ?Categorias
+    {
+        return $this->categoria;
+    }
+
+    public function setCategoria(?Categorias $categoria): static
+    {
+        $this->categoria = $categoria;
+        return $this;
+    }
+
     public function getValoraciones(): Collection
     {
         return $this->valoraciones;
@@ -231,9 +244,6 @@ class Peliculas
         return $this;
     }
 
-    /**
-     * @return Collection<int, RankingPeliculas>
-     */
     public function getRankingPeliculas(): Collection
     {
         return $this->rankingPeliculas;
