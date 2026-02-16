@@ -1,0 +1,67 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ categoria ? 'Editar' : 'Nueva' }} Categoría - Admin{% endblock %}
+
+{% block body %}
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card shadow-lg">
+                    <div class="card-header {{ categoria ? 'bg-warning' : 'bg-success' }} text-white">
+                        <h3 class="mb-0">
+                            <i class="fas fa-{{ categoria ? 'edit' : 'plus' }} me-2"></i>
+                            {{ categoria ? 'Editar' : 'Nueva' }} Categoría
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Las categorías te permiten organizar los elementos del sistema (películas, cortos, etc.)
+                        </div>
+
+                        {{ form_start(form) }}
+
+                        <div class="mb-3">
+                            {{ form_label(form.nombre, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
+                            {{ form_widget(form.nombre) }}
+                            {{ form_errors(form.nombre) }}
+                            <small class="form-text text-muted">
+                                Ejemplos: "Películas", "Cortos", "Series", "Documentales"
+                            </small>
+                        </div>
+
+                        <div class="mb-4">
+                            {{ form_label(form.descripcion, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
+                            {{ form_widget(form.descripcion) }}
+                            {{ form_errors(form.descripcion) }}
+                            <small class="form-text text-muted">
+                                Breve descripción de qué tipo de contenido agrupa esta categoría
+                            </small>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-{{ categoria ? 'warning' : 'success' }}">
+                                <i class="fas fa-save me-2"></i>{{ categoria ? 'Actualizar' : 'Crear' }} categoría
+                            </button>
+                            <a href="{{ path('admin_categorias_index') }}" class="btn btn-secondary">
+                                <i class="fas fa-times me-2"></i>Cancelar
+                            </a>
+                        </div>
+
+                        {{ form_end(form) }}
+                    </div>
+                </div>
+
+                {% if categoria %}
+                    <div class="card shadow-lg mt-3">
+                        <div class="card-header bg-info text-white">
+                            <h5 class="mb-0">
+                                <i class="fas fa-info-circle me-2"></i>Información adicional
+                            </h5>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock %}

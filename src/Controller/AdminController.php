@@ -27,13 +27,17 @@ class AdminController extends AbstractController
         ValoracionesRepository $valoracionesRepository,
         RankingsRepository $rankingsRepository
     ): Response {
-        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        // Verifico que sea admin
+        if (!$this->getUser() || !$this->getUser()->isAdmin()) {
+            $this->addFlash('error', 'No tienes permisos para acceder aquí');
+            return $this->redirectToRoute('peliculas_index');
+        }
 
-        // Estadísticas básicas
-        $totalPeliculas = $peliculasRepository->count([]);
-        $totalUsuarios = $usuariosRepository->count([]);
-        $totalValoraciones = $valoracionesRepository->count([]);
-        $totalRankings = $rankingsRepository->count([]);
+        // Cuento totales de forma simple
+        $totalPeliculas = count($peliculasRepository->findAll());
+        $totalUsuarios = count($usuariosRepository->findAll());
+        $totalValoraciones = count($valoracionesRepository->findAll());
+        $totalRankings = count($rankingsRepository->findAll());
 
         return $this->render('admin/dashboard.html.twig', [
             'total_peliculas' => $totalPeliculas,
@@ -49,7 +53,10 @@ class AdminController extends AbstractController
     #[Route('/peliculas', name: 'admin_peliculas')]
     public function peliculas(PeliculasRepository $peliculasRepository): Response
     {
-        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        if (!$this->getUser() || !$this->getUser()->isAdmin()) {
+            $this->addFlash('error', 'No tienes permisos');
+            return $this->redirectToRoute('peliculas_index');
+        }
 
         $peliculas = $peliculasRepository->findAll();
 
@@ -66,7 +73,9 @@ class AdminController extends AbstractController
         Request $request,
         EntityManagerInterface $entityManager
     ): Response {
-        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        if (!$this->getUser() || !$this->getUser()->isAdmin()) {
+            return $this->redirectToRoute('app_login');
+        }
 
         $pelicula = new Peliculas();
         $form = $this->createForm(PeliculaFormType::class, $pelicula);
@@ -96,7 +105,9 @@ class AdminController extends AbstractController
         Request $request,
         EntityManagerInterface $entityManager
     ): Response {
-        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        if (!$this->getUser() || !$this->getUser()->isAdmin()) {
+            return $this->redirectToRoute('app_login');
+        }
 
         $form = $this->createForm(PeliculaFormType::class, $pelicula);
         $form->handleRequest($request);
@@ -124,7 +135,9 @@ class AdminController extends AbstractController
         Request $request,
         EntityManagerInterface $entityManager
     ): Response {
-        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        if (!$this->getUser() || !$this->getUser()->isAdmin()) {
+            return $this->redirectToRoute('app_login');
+        }
 
         if ($this->isCsrfTokenValid('delete-pelicula-' . $pelicula->getId(), $request->request->get('_token'))) {
             $entityManager->remove($pelicula);
@@ -144,46 +157,75 @@ class AdminController extends AbstractController
         ValoracionesRepository $valoracionesRepository,
         UsuariosRepository $usuariosRepository
     ): Response {
-        $this->denyAccessUnlessGranted('ROLE_ADMIN');
-
         // Top 10 películas más valoradas
-        $topPeliculas = $peliculasRepository->findBy(
-            [],
-            ['contadorRating' => 'DESC'],
-            10
-        );
+        // Lo hago simple: traigo todas y las ordeno con PHP
+        $todasPeliculas = $peliculasRepository->findAll();
+        usort($todasPeliculas, function($a, $b) {
+            return $b->getContadorRating() <=> $a->getContadorRating();
+        });
+        $topPeliculas = array_slice($todasPeliculas, 0, 10);
 
-        // Top 10 películas mejor puntuadas (con al menos 3 valoraciones)
-        $mejorPuntuadas = $peliculasRepository->createQueryBuilder('p')
-            ->where('p.contadorRating >= 3')
-            ->orderBy('p.promedioRating', 'DESC')
-            ->setMaxResults(10)
-            ->getQuery()
-            ->getResult();
+        // Top 10 mejor puntuadas (con al menos 3 valoraciones)
+        $mejorPuntuadas = [];
+        foreach ($todasPeliculas as $pelicula) {
+            if ($pelicula->getContadorRating() >= 3) {
+                $mejorPuntuadas[] = $pelicula;
+            }
+        }
+        usort($mejorPuntuadas, function($a, $b) {
+            return $b->getPromedioRating() <=> $a->getPromedioRating();
+        });
+        $mejorPuntuadas = array_slice($mejorPuntuadas, 0, 10);
 
-        // Usuarios más activos (que más han valorado)
-        $usuariosActivos = $valoracionesRepository->createQueryBuilder('v')
-            ->select('u.nombreUsuario, COUNT(v.id) as total_valoraciones')
-            ->join('v.usuario', 'u')
-            ->groupBy('u.id')
-            ->orderBy('total_valoraciones', 'DESC')
-            ->setMaxResults(10)
-            ->getQuery()
-            ->getResult();
+        // Usuarios más activos
+        // Lo hago contando manualmente
+        $todosUsuarios = $usuariosRepository->findAll();
+        $usuariosActivos = [];
+
+        foreach ($todosUsuarios as $usuario) {
+            $cantidadValoraciones = count($usuario->getValoraciones());
+            if ($cantidadValoraciones > 0) {
+                $usuariosActivos[] = [
+                    'nombreUsuario' => $usuario->getNombreUsuario(),
+                    'total_valoraciones' => $cantidadValoraciones
+                ];
+            }
+        }
+
+        // Ordeno por cantidad de valoraciones
+        usort($usuariosActivos, function($a, $b) {
+            return $b['total_valoraciones'] <=> $a['total_valoraciones'];
+        });
+        $usuariosActivos = array_slice($usuariosActivos, 0, 10);
 
         // Distribución de puntuaciones
-        $distribucionPuntuaciones = $valoracionesRepository->createQueryBuilder('v')
-            ->select('ROUND(v.puntuacion) as puntuacion, COUNT(v.id) as cantidad')
-            ->groupBy('puntuacion')
-            ->orderBy('puntuacion', 'ASC')
-            ->getQuery()
-            ->getResult();
+        // Traigo todas las valoraciones y las cuento con PHP
+        $todasValoraciones = $valoracionesRepository->findAll();
+
+        // Array para contar cada puntuación
+        $distribucionPuntuaciones = [
+            ['puntuacion' => '1', 'cantidad' => 0],
+            ['puntuacion' => '2', 'cantidad' => 0],
+            ['puntuacion' => '3', 'cantidad' => 0],
+            ['puntuacion' => '4', 'cantidad' => 0],
+            ['puntuacion' => '5', 'cantidad' => 0],
+        ];
+
+        // Cuento las valoraciones
+        foreach ($todasValoraciones as $valoracion) {
+            $puntuacion = (int)round($valoracion->getPuntuacion());
+            if ($puntuacion >= 1 && $puntuacion <= 5) {
+                $distribucionPuntuaciones[$puntuacion - 1]['cantidad']++;
+            }
+        }
 
         // Películas sin valoraciones
-        $sinValoraciones = $peliculasRepository->createQueryBuilder('p')
-            ->where('p.contadorRating = 0')
-            ->getQuery()
-            ->getResult();
+        $sinValoraciones = [];
+        foreach ($todasPeliculas as $pelicula) {
+            if ($pelicula->getContadorRating() == 0) {
+                $sinValoraciones[] = $pelicula;
+            }
+        }
 
         return $this->render('admin/estadisticas.html.twig', [
             'top_peliculas' => $topPeliculas,
@@ -198,9 +240,10 @@ class AdminController extends AbstractController
      * Gestión de usuarios
      */
     #[Route('/usuarios', name: 'admin_usuarios')]
-    public function usuarios(UsuariosRepository $usuariosRepository): Response
-    {
-        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+    public function usuarios(UsuariosRepository $usuariosRepository): Response {
+        if (!$this->getUser() || !$this->getUser()->isAdmin()) {
+            return $this->redirectToRoute('app_login');
+        }
 
         $usuarios = $usuariosRepository->findAll();
 

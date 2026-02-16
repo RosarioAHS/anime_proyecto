@@ -20,6 +20,15 @@ class PeliculaFormType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
+            ->add('categoria', EntityType::class, [
+                'class' => Categorias::class,
+                'choice_label' => 'nombre',
+                'label' => 'Categoría',
+                'attr' => ['class' => 'form-control'],
+                'constraints' => [
+                    new NotBlank(message: 'Selecciona una categoría')
+                ],
+            ])
             ->add('titulo', TextType::class, ['label' => 'Título',
                 'attr' => [
                     'class' => 'form-control',
