@@ -1,0 +1,91 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Gestión de Categorías - Admin{% endblock %}
+
+{% block body %}
+    <div class="container">
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <h1 class="text-white">
+                    <i class="fas fa-folder me-2"></i>Gestión de Categorías
+                </h1>
+                <p class="text-white-50">Administra las categorías del sistema</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <a href="{{ path('admin_categorias_nueva') }}" class="btn btn-success">
+                    <i class="fas fa-plus me-2"></i>Nueva categoría
+                </a>
+                <a href="{{ path('admin_dashboard') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Dashboard
+                </a>
+            </div>
+        </div>
+
+        {% if categorias is empty %}
+            <div class="card shadow-lg">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-folder-open fa-4x text-muted mb-3"></i>
+                    <h4>No hay categorías creadas</h4>
+                    <p class="text-muted">Crea tu primera categoría para organizar los elementos</p>
+                    <a href="{{ path('admin_categorias_nueva') }}" class="btn btn-success mt-3">
+                        <i class="fas fa-plus me-2"></i>Crear primera categoría
+                    </a>
+                </div>
+            </div>
+        {% else %}
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                {% for categoria in categorias %}
+                    <div class="col">
+                        <div class="card shadow-lg h-100">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                    <h4 class="card-title">
+                                        <i class="fas fa-folder text-primary me-2"></i>
+                                        {{ categoria.nombre }}
+                                    </h4>
+                                    <span class="badge bg-primary">
+                                    {{ categoria.peliculas|length }} elementos
+                                </span>
+                                </div>
+
+                                {% if categoria.descripcion %}
+                                    <p class="card-text text-muted">{{ categoria.descripcion }}</p>
+                                {% else %}
+                                    <p class="card-text text-muted fst-italic">Sin descripción</p>
+                                {% endif %}
+
+                                <div class="d-grid gap-2 mt-3">
+                                    <a href="{{ path('admin_categorias_elementos', {'id': categoria.id}) }}" class="btn btn-primary">
+                                        <i class="fas fa-list me-2"></i>Ver elementos ({{ categoria.peliculas|length }})
+                                    </a>
+
+                                    <div class="btn-group">
+                                        <a href="{{ path('admin_categorias_editar', {'id': categoria.id}) }}" class="btn btn-warning">
+                                            <i class="fas fa-edit me-1"></i>Editar
+                                        </a>
+
+                                        {% if categoria.peliculas|length == 0 %}
+                                            <form method="post"
+                                                  action="{{ path('admin_categorias_eliminar', {'id': categoria.id}) }}"
+                                                  class="d-inline"
+                                                  onsubmit="return confirm('¿Eliminar esta categoría?');">
+                                                <input type="hidden" name="_token" value="{{ csrf_token('delete-categoria-' ~ categoria.id) }}">
+                                                <button type="submit" class="btn btn-danger">
+                                                    <i class="fas fa-trash me-1"></i>Eliminar
+                                                </button>
+                                            </form>
+                                        {% else %}
+                                            <button class="btn btn-danger" disabled title="No se puede eliminar con elementos">
+                                                <i class="fas fa-trash me-1"></i>Eliminar
+                                            </button>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}

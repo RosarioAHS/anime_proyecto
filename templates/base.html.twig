@@ -63,6 +63,12 @@
                     </a>
                 </li>
 
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ path('admin_estadisticas') }}">
+                        <i class="fas fa-chart-bar me-1"></i>Estadísticas
+                    </a>
+                </li>
+
                 {% if is_granted('ROLE_USER') %}
                     <li class="nav-item">
                         <a class="nav-link" href="{{ path('rankings_index') }}">
@@ -84,6 +90,7 @@
                         <ul class="dropdown-menu">
                             <li><a class="dropdown-item" href="{{ path('admin_dashboard') }}"><i class="fas fa-tachometer-alt me-2"></i>Dashboard</a></li>
                             <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{{ path('admin_categorias_index') }}"><i class="fas fa-folder me-2"></i>Gestionar Categorías</a></li>
                             <li><a class="dropdown-item" href="{{ path('admin_peliculas') }}"><i class="fas fa-film me-2"></i>Gestionar Películas</a></li>
                             <li><a class="dropdown-item" href="{{ path('admin_estadisticas') }}"><i class="fas fa-chart-bar me-2"></i>Estadísticas</a></li>
                             <li><a class="dropdown-item" href="{{ path('admin_usuarios') }}"><i class="fas fa-users me-2"></i>Usuarios</a></li>

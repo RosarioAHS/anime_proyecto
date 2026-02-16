@@ -1,272 +1,165 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Estadísticas - Admin{% endblock %}
+{% block title %}Estadísticas - Studio Ghibli{% endblock %}
 
 {% block body %}
     <div class="container">
         <div class="row mb-4">
             <div class="col-md-8">
                 <h1 class="text-white">
-                    <i class="fas fa-chart-line me-2"></i>Estadísticas del Sistema
+                    <i class="fas fa-chart-bar me-2"></i>Estadísticas Globales
                 </h1>
-                <p class="text-white-50">Análisis completo de la plataforma</p>
+                <p class="text-white-50">Consulta las estadísticas del sistema</p>
             </div>
             <div class="col-md-4 text-end">
-                <a href="{{ path('admin_dashboard') }}" class="btn btn-secondary">
-                    <i class="fas fa-arrow-left me-2"></i>Dashboard
-                </a>
+                {% if is_granted('ROLE_ADMIN') %}
+                    <a href="{{ path('admin_dashboard') }}" class="btn btn-secondary">
+                        <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                    </a>
+                {% else %}
+                    <a href="{{ path('peliculas_index') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Volver
+                    </a>
+                {% endif %}
             </div>
         </div>
 
-        <!-- Top 10 Películas Más Valoradas -->
+        <!-- Estadística 1: Número total de valoraciones -->
         <div class="card shadow-lg mb-4">
             <div class="card-header bg-primary text-white">
                 <h5 class="mb-0">
-                    <i class="fas fa-trophy me-2"></i>Top 10 Películas Más Valoradas
+                    <i class="fas fa-star me-2"></i>Número Total de Valoraciones
                 </h5>
             </div>
-            <div class="card-body">
-                <canvas id="topPeliculasChart" height="80"></canvas>
+            <div class="card-body text-center">
+                <h1 class="display-3 text-primary">
+                    {{ top_peliculas|reduce((carry, p) => carry + p.contadorRating, 0) }}
+                </h1>
+                <p class="text-muted mb-0">valoraciones realizadas en total</p>
             </div>
         </div>
 
-        <div class="row mb-4">
-            <!-- Distribución de Puntuaciones -->
-            <div class="col-md-6">
-                <div class="card shadow-lg h-100">
-                    <div class="card-header bg-success text-white">
-                        <h5 class="mb-0">
-                            <i class="fas fa-star me-2"></i>Distribución de Puntuaciones
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <canvas id="distribucionChart"></canvas>
-                    </div>
-                </div>
-            </div>
 
-            <!-- Usuarios Más Activos -->
-            <div class="col-md-6">
-                <div class="card shadow-lg h-100">
-                    <div class="card-header bg-warning text-dark">
-                        <h5 class="mb-0">
-                            <i class="fas fa-users me-2"></i>Top 10 Usuarios Más Activos
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <canvas id="usuariosActivosChart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Películas Mejor Puntuadas -->
         <div class="card shadow-lg mb-4">
-            <div class="card-header bg-info text-white">
+            <div class="card-header bg-success text-white">
                 <h5 class="mb-0">
-                    <i class="fas fa-award me-2"></i>Top 10 Películas Mejor Puntuadas (mínimo 3 valoraciones)
+                    <i class="fas fa-calculator me-2"></i>Promedio de Puntuaciones por Categoría
                 </h5>
             </div>
             <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-striped">
-                        <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Película</th>
-                            <th>Director</th>
-                            <th>Rating Promedio</th>
-                            <th>Nº Valoraciones</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        {% for pelicula in mejor_puntuadas %}
-                            <tr>
-                                <td>{{ loop.index }}</td>
-                                <td>
-                                    <a href="{{ path('peliculas_show', {'id': pelicula.id}) }}">
-                                        {{ pelicula.titulo }}
-                                    </a>
-                                </td>
-                                <td>{{ pelicula.director }}</td>
-                                <td>
-                                    <span class="text-warning">
-                                        <i class="fas fa-star"></i> {{ pelicula.promedioRating|number_format(2) }}
-                                    </span>
-                                </td>
-                                <td>
-                                    <span class="badge bg-primary">{{ pelicula.contadorRating }}</span>
-                                </td>
-                            </tr>
-                        {% else %}
-                            <tr>
-                                <td colspan="5" class="text-center text-muted">No hay datos suficientes</td>
-                            </tr>
+                <div class="row">
+                    <div class="col-md-6 offset-md-3 text-center">
+                        <h3 class="mb-3">Categoría: Películas</h3>
+                        {% set suma_ratings = 0 %}
+                        {% set cantidad_peliculas = 0 %}
+                        {% for pelicula in top_peliculas %}
+                            {% if pelicula.contadorRating > 0 %}
+                                {% set suma_ratings = suma_ratings + pelicula.promedioRating %}
+                                {% set cantidad_peliculas = cantidad_peliculas + 1 %}
+                            {% endif %}
                         {% endfor %}
-                        </tbody>
-                    </table>
+
+                        {% if cantidad_peliculas > 0 %}
+                            {% set promedio_categoria = suma_ratings / cantidad_peliculas %}
+                            <div class="mb-3">
+                                <h1 class="display-4 text-success">
+                                    {{ promedio_categoria|number_format(2) }}
+                                </h1>
+                                <p class="text-muted">sobre 5 estrellas</p>
+                            </div>
+
+                            <!-- Mostrar estrellas visuales -->
+                            <div class="text-warning" style="font-size: 2rem;">
+                                {% for i in 1..5 %}
+                                    {% if i <= promedio_categoria %}
+                                        <i class="fas fa-star"></i>
+                                    {% elseif i - 0.5 <= promedio_categoria %}
+                                        <i class="fas fa-star-half-alt"></i>
+                                    {% else %}
+                                        <i class="far fa-star"></i>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+
+                            <p class="text-muted mt-3">
+                                Basado en {{ cantidad_peliculas }} películas valoradas
+                            </p>
+                        {% else %}
+                            <p class="text-muted">No hay películas valoradas aún</p>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Películas Sin Valoraciones -->
-        {% if sin_valoraciones|length > 0 %}
-            <div class="card shadow-lg">
-                <div class="card-header bg-danger text-white">
-                    <h5 class="mb-0">
-                        <i class="fas fa-exclamation-triangle me-2"></i>Películas Sin Valoraciones
-                        <span class="badge bg-light text-dark">{{ sin_valoraciones|length }}</span>
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="row row-cols-2 row-cols-md-4 row-cols-lg-6 g-3">
-                        {% for pelicula in sin_valoraciones|slice(0, 12) %}
-                            <div class="col">
-                                <a href="{{ path('peliculas_show', {'id': pelicula.id}) }}" class="text-decoration-none">
-                                    <div class="text-center">
-                                        {% if pelicula.imagenUrl %}
-                                            <img src="{{ pelicula.imagenUrl }}"
-                                                 class="img-thumbnail"
-                                                 style="width: 100%; height: 150px; object-fit: cover;">
-                                        {% endif %}
-                                        <small class="d-block mt-2 text-muted">{{ pelicula.titulo }}</small>
-                                    </div>
-                                </a>
-                            </div>
-                        {% endfor %}
-                    </div>
-                    {% if sin_valoraciones|length > 12 %}
-                        <p class="text-center mt-3 mb-0 text-muted">
-                            Y {{ sin_valoraciones|length - 12 }} películas más...
-                        </p>
-                    {% endif %}
-                </div>
+        <div class="card shadow-lg mb-4">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">
+                    <i class="fas fa-trophy me-2"></i>Películas Más Valoradas (Top 10)
+                </h5>
             </div>
-        {% endif %}
-    </div>
-
-    {% block javascripts %}
-        {{ parent() }}
-
-        <!-- Importo Chart.js desde un CDN - es una librería para hacer gráficos -->
-        <!-- La encontré buscando "como hacer graficos en javascript" -->
-
-        <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-        <script>
-            // Gráfico 1: Top Películas Más Valoradas
-            // Este fue el primer gráfico que hice, seguí el tutorial de Chart.js
-            const topPeliculasCtx = document.getElementById('topPeliculasChart').getContext('2d');
-            new Chart(topPeliculasCtx, {
-                type: 'bar', // Tipo de gráfico: barras
-                data: {
-                    // Las etiquetas son los nombres de las películas
-                    labels: [
-                        {% for pelicula in top_peliculas %}
-                        '{{ pelicula.titulo|length > 20 ? pelicula.titulo|slice(0, 20) ~ '...' : pelicula.titulo }}'{% if not loop.last %},{% endif %}
-                        {% endfor %}
-                    ],
-                    datasets: [{
-                        label: 'Número de Valoraciones',
-                        // Los datos son el número de valoraciones
-                        data: [
+            <div class="card-body">
+                {% if top_peliculas is empty %}
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-inbox fa-3x mb-3"></i>
+                        <p>No hay películas valoradas todavía</p>
+                    </div>
+                {% else %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                            <tr>
+                                <th style="width: 60px;">Posición</th>
+                                <th>Película</th>
+                                <th>Director</th>
+                                <th class="text-center">Rating Promedio</th>
+                                <th class="text-center">Nº Valoraciones</th>
+                            </tr>
+                            </thead>
+                            <tbody>
                             {% for pelicula in top_peliculas %}
-                            {{ pelicula.contadorRating }}{% if not loop.last %},{% endif %}
+                                <tr>
+                                    <td>
+                                        <div class="text-center">
+                                            {% if loop.index == 1 %}
+                                                <i class="fas fa-medal text-warning fa-2x" title="1er lugar"></i>
+                                            {% elseif loop.index == 2 %}
+                                                <i class="fas fa-medal text-secondary fa-2x" title="2do lugar"></i>
+                                            {% elseif loop.index == 3 %}
+                                                <i class="fas fa-medal fa-2x" style="color: #cd7f32;" title="3er lugar"></i>
+                                            {% else %}
+                                                <span class="badge bg-primary">{{ loop.index }}</span>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <strong>{{ pelicula.titulo }}</strong>
+                                    </td>
+                                    <td>{{ pelicula.director }}</td>
+                                    <td class="text-center">
+                                        {% if pelicula.contadorRating > 0 %}
+                                            <span class="text-warning">
+                                                <i class="fas fa-star"></i> {{ pelicula.promedioRating|number_format(2) }}
+                                            </span>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge bg-primary">{{ pelicula.contadorRating }}</span>
+                                    </td>
+                                </tr>
                             {% endfor %}
-                        ],
-                        // color morado
-                        backgroundColor: 'rgba(102, 126, 234, 0.8)',
-                        borderColor: 'rgba(102, 126, 234, 1)',
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    plugins: {
-                        legend: { display: false } // Oculto la leyenda
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true, // El eje Y empieza en 0
-                            ticks: { stepSize: 1 } // De uno en uno
-                        }
-                    }
-                }
-            });
+                            </tbody>
+                        </table>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
 
-            // Gráfico 2: Distribución de Puntuaciones
-            const distribucionCtx = document.getElementById('distribucionChart').getContext('2d');
-            new Chart(distribucionCtx, {
-                type: 'pie',
-                data: {
-                    labels: [
-                        {% for dist in distribucion_puntuaciones %}
-                        '{{ dist.puntuacion }} Estrellas'{% if not loop.last %},{% endif %}
-                        {% endfor %}
-                    ],
-                    datasets: [{
-                        data: [
-                            {% for dist in distribucion_puntuaciones %}
-                            {{ dist.cantidad }}{% if not loop.last %},{% endif %}
-                            {% endfor %}
-                        ],
-                        // Diferentes colores para cada sección
-                        backgroundColor: [
-                            'rgba(220, 53, 69, 0.8)',   // Rojo para 1 estrella
-                            'rgba(253, 126, 20, 0.8)',  // Naranja para 2 estrellas
-                            'rgba(255, 193, 7, 0.8)',   // Amarillo para 3 estrellas
-                            'rgba(40, 167, 69, 0.8)',   // Verde para 4 estrellas
-                            'rgba(25, 135, 84, 0.8)'    // Verde oscuro para 5 estrellas
-                        ]
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: { position: 'bottom' }
-                    }
-                }
-            });
-
-            // Gráfico 3: Usuarios Más Activos (tipo dona/doughnut)
-            // Este lo hice después del pie chart, es muy similar
-            const usuariosCtx = document.getElementById('usuariosActivosChart').getContext('2d');
-            new Chart(usuariosCtx, {
-                type: 'doughnut',
-                data: {
-                    labels: [
-                        {% for usuario in usuarios_activos %}
-                        '{{ usuario.nombreUsuario }}'{% if not loop.last %},{% endif %}
-                        {% endfor %}
-                    ],
-                    datasets: [{
-                        data: [
-                            {% for usuario in usuarios_activos %}
-                            {{ usuario.total_valoraciones }}{% if not loop.last %},{% endif %}
-                            {% endfor %}
-                        ],
-                        // Usé varios colores diferentes para que se vea mejor
-                        backgroundColor: [
-                            'rgba(102, 126, 234, 0.8)',
-                            'rgba(118, 75, 162, 0.8)',
-                            'rgba(255, 193, 7, 0.8)',
-                            'rgba(25, 135, 84, 0.8)',
-                            'rgba(13, 110, 253, 0.8)',
-                            'rgba(220, 53, 69, 0.8)',
-                            'rgba(108, 117, 125, 0.8)',
-                            'rgba(13, 202, 240, 0.8)',
-                            'rgba(214, 51, 132, 0.8)',
-                            'rgba(111, 66, 193, 0.8)'
-                        ]
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: { position: 'bottom' }
-                    }
-                }
-            });
-        </script>
-    {% endblock %}
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>
+            <strong>Nota:</strong> Las estadísticas se actualizan automáticamente cada vez que un usuario valora una película.
+        </div>
+    </div>
 {% endblock %}

@@ -1,0 +1,123 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Elementos de {{ categoria.nombre }} - Admin{% endblock %}
+
+{% block body %}
+    <div class="container">
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <h1 class="text-white">
+                    <i class="fas fa-folder-open me-2"></i>{{ categoria.nombre }}
+                </h1>
+                <p class="text-white-50">
+                    {% if categoria.descripcion %}
+                        {{ categoria.descripcion }}
+                    {% else %}
+                        Gestiona los elementos de esta categoría
+                    {% endif %}
+                </p>
+            </div>
+            <div class="col-md-4 text-end">
+                <a href="{{ path('admin_peliculas_nueva') }}" class="btn btn-success">
+                    <i class="fas fa-plus me-2"></i>Añadir elemento
+                </a>
+                <a href="{{ path('admin_categorias_index') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Categorías
+                </a>
+            </div>
+        </div>
+
+        {% if categoria.peliculas is empty %}
+            <div class="card shadow-lg">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-inbox fa-4x text-muted mb-3"></i>
+                    <h4>No hay elementos en esta categoría</h4>
+                    <p class="text-muted">Añade tu primer elemento a "{{ categoria.nombre }}"</p>
+                    <a href="{{ path('admin_peliculas_nueva') }}" class="btn btn-success mt-3">
+                        <i class="fas fa-plus me-2"></i>Añadir primer elemento
+                    </a>
+                </div>
+            </div>
+        {% else %}
+            <div class="card shadow-lg">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        Elementos en "{{ categoria.nombre }}"
+                        <span class="badge bg-light text-dark">{{ categoria.peliculas|length }}</span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Imagen</th>
+                                <th>Título</th>
+                                <th>Director</th>
+                                <th>Año</th>
+                                <th>Rating</th>
+                                <th>Acciones</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for pelicula in categoria.peliculas %}
+                                <tr>
+                                    <td>{{ pelicula.id }}</td>
+                                    <td>
+                                        {% if pelicula.imagenUrl %}
+                                            <img src="{{ pelicula.imagenUrl }}"
+                                                 class="img-thumbnail"
+                                                 style="width: 50px; height: 70px; object-fit: cover;">
+                                        {% else %}
+                                            <div class="bg-secondary text-white d-flex align-items-center justify-content-center"
+                                                 style="width: 50px; height: 70px;">
+                                                <i class="fas fa-film"></i>
+                                            </div>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <strong>{{ pelicula.titulo }}</strong>
+                                    </td>
+                                    <td>{{ pelicula.director }}</td>
+                                    <td>{{ pelicula.anoLanzamiento ?? '-' }}</td>
+                                    <td>
+                                        <span class="text-warning">
+                                            {% if pelicula.promedioRating > 0 %}
+                                                <i class="fas fa-star"></i> {{ pelicula.promedioRating|number_format(1) }}
+                                            {% else %}
+                                                -
+                                            {% endif %}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{{ path('peliculas_show', {'id': pelicula.id}) }}"
+                                               class="btn btn-info" title="Ver">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{{ path('admin_peliculas_editar', {'id': pelicula.id}) }}"
+                                               class="btn btn-warning" title="Editar">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <form method="post"
+                                                  action="{{ path('admin_peliculas_eliminar', {'id': pelicula.id}) }}"
+                                                  class="d-inline"
+                                                  onsubmit="return confirm('¿Eliminar este elemento?');">
+                                                <input type="hidden" name="_token" value="{{ csrf_token('delete-pelicula-' ~ pelicula.id) }}">
+                                                <button type="submit" class="btn btn-danger btn-sm" title="Eliminar">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}
