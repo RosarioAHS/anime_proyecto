@@ -1,0 +1,252 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Asignar Películas a Categorías - Admin{% endblock %}
+
+{% block body %}
+    <div class="container-fluid">
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <h1 class="text-white">
+                    <i class="fas fa-arrows-alt me-2"></i>Asignar Películas
+                </h1>
+                <p class="text-white-50">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Arrastra las películas hacia la categoría que desees asignarles
+                </p>
+            </div>
+            <div class="col-md-4 text-end">
+                <a href="{{ path('admin_categorias_index') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Volver
+                </a>
+            </div>
+        </div>
+
+        <div class="row">
+            {# Columna izquierda: Sin categoría #}
+            <div class="col-md-3">
+                <div class="card shadow-lg">
+                    <div class="card-header bg-secondary text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-question-circle me-2"></i>Sin Categoría
+                            <span class="badge bg-light text-dark ms-2" id="badge-sin-categoria">
+                            {{ peliculas|filter(p => p.categoria is null)|length }}
+                        </span>
+                        </h5>
+                    </div>
+                    <div class="card-body p-2 drop-zone"
+                         data-categoria-id="null"
+                         style="min-height: 500px; max-height: 70vh; overflow-y: auto;">
+                        {% for pelicula in peliculas %}
+                            {% if pelicula.categoria is null %}
+                                {{ _self.pelicula_card(pelicula) }}
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            {# Columna derecha: Categorías #}
+            <div class="col-md-9">
+                <div class="row g-3">
+                    {% for categoria in categorias %}
+                        <div class="col-md-6">
+                            <div class="card shadow-lg">
+                                <div class="card-header bg-primary text-white">
+                                    <h5 class="mb-0">
+                                        <i class="fas fa-folder me-2"></i>{{ categoria.nombre }}
+                                        <span class="badge bg-light text-dark ms-2"
+                                              id="badge-categoria-{{ categoria.id }}">
+                                        {{ peliculas|filter(p => p.categoria is not null and p.categoria.id == categoria.id)|length }}
+                                    </span>
+                                    </h5>
+                                    {% if categoria.descripcion %}
+                                        <small class="text-white-50">{{ categoria.descripcion }}</small>
+                                    {% endif %}
+                                </div>
+                                <div class="card-body p-2 drop-zone"
+                                     data-categoria-id="{{ categoria.id }}"
+                                     style="min-height: 150px; max-height: 350px; overflow-y: auto;">
+                                    {% for pelicula in peliculas %}
+                                        {% if pelicula.categoria is not null and pelicula.categoria.id == categoria.id %}
+                                            {{ _self.pelicula_card(pelicula) }}
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# Macro para tarjeta de película #}
+    {% macro pelicula_card(pelicula) %}
+        <div class="pelicula-card draggable mb-2"
+             draggable="true"
+             data-pelicula-id="{{ pelicula.id }}"
+             data-pelicula-titulo="{{ pelicula.titulo }}">
+            <div class="d-flex align-items-center p-2 bg-light rounded border pelicula-inner">
+                {% if pelicula.imagenUrl %}
+                    <img src="{{ pelicula.imagenUrl }}"
+                         style="width: 35px; height: 50px; object-fit: cover; flex-shrink: 0;"
+                         class="rounded me-2">
+                {% else %}
+                    <div class="bg-secondary rounded me-2 d-flex align-items-center justify-content-center"
+                         style="width: 35px; height: 50px; flex-shrink: 0;">
+                        <i class="fas fa-film text-white" style="font-size: 0.7rem;"></i>
+                    </div>
+                {% endif %}
+                <div style="overflow: hidden;">
+                    <small class="fw-bold d-block text-truncate">{{ pelicula.titulo }}</small>
+                    <small class="text-muted text-truncate d-block">{{ pelicula.director }}</small>
+                </div>
+                <i class="fas fa-grip-vertical text-muted ms-auto ps-2"></i>
+            </div>
+        </div>
+    {% endmacro %}
+
+    {# Toast de notificación #}
+    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 9999">
+        <div id="toast-notificacion" class="toast align-items-center text-white border-0" role="alert">
+            <div class="d-flex">
+                <div class="toast-body fw-bold" id="toast-mensaje"></div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .drop-zone {
+            border: 2px dashed #dee2e6;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+        .drop-zone.drag-over {
+            border-color: #0d6efd;
+            background-color: rgba(13, 110, 253, 0.08) !important;
+        }
+        .draggable {
+            cursor: grab;
+            user-select: none;
+        }
+        .draggable:active {
+            cursor: grabbing;
+        }
+        .draggable.dragging {
+            opacity: 0.4;
+        }
+        .pelicula-inner {
+            transition: all 0.2s ease;
+        }
+        .pelicula-card:hover .pelicula-inner {
+            border-color: #0d6efd !important;
+            box-shadow: 0 2px 8px rgba(13, 110, 253, 0.2);
+        }
+    </style>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            let draggedEl = null;
+            let sourceZone = null;
+
+            function initDrag(el) {
+                el.addEventListener('dragstart', function (e) {
+                    draggedEl = this;
+                    sourceZone = this.closest('.drop-zone');
+                    setTimeout(() => this.classList.add('dragging'), 0);
+                    e.dataTransfer.effectAllowed = 'move';
+                });
+                el.addEventListener('dragend', function () {
+                    this.classList.remove('dragging');
+                    document.querySelectorAll('.drop-zone').forEach(z => z.classList.remove('drag-over'));
+                });
+            }
+
+            // Inicializar drag en todos los elementos
+            document.querySelectorAll('.draggable').forEach(initDrag);
+
+            // Inicializar drop zones
+            document.querySelectorAll('.drop-zone').forEach(function (zone) {
+                zone.addEventListener('dragover', function (e) {
+                    e.preventDefault();
+                    this.classList.add('drag-over');
+                });
+                zone.addEventListener('dragleave', function (e) {
+                    if (!this.contains(e.relatedTarget)) {
+                        this.classList.remove('drag-over');
+                    }
+                });
+                zone.addEventListener('drop', function (e) {
+                    e.preventDefault();
+                    this.classList.remove('drag-over');
+
+                    if (!draggedEl || this === sourceZone) return;
+
+                    const peliculaId = draggedEl.dataset.peliculaId;
+                    const peliculaTitulo = draggedEl.dataset.peliculaTitulo;
+                    const categoriaId = this.dataset.categoriaId;
+                    const categoriaIdValue = categoriaId === 'null' ? null : parseInt(categoriaId);
+
+                    // Mover visualmente
+                    this.appendChild(draggedEl);
+                    initDrag(draggedEl); // Re-registrar eventos
+                    actualizarBadges();
+
+                    // Guardar en BD
+                    guardarAsignacion(peliculaId, categoriaIdValue, peliculaTitulo);
+                });
+            });
+
+            function actualizarBadges() {
+                document.querySelectorAll('.drop-zone').forEach(function (zone) {
+                    const catId = zone.dataset.categoriaId;
+                    const count = zone.querySelectorAll('.draggable').length;
+                    const badge = catId === 'null'
+                        ? document.getElementById('badge-sin-categoria')
+                        : document.getElementById('badge-categoria-' + catId);
+                    if (badge) badge.textContent = count;
+                });
+            }
+
+            function guardarAsignacion(peliculaId, categoriaId, titulo) {
+                fetch('{{ path("admin_asignar_categoria") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({
+                        peliculaId: parseInt(peliculaId),
+                        categoriaId: categoriaId
+                    })
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            mostrarToast('"' + titulo + '" asignada correctamente', 'bg-success');
+                        } else {
+                            mostrarToast('Error: ' + (data.error || 'Error desconocido'), 'bg-danger');
+                        }
+                    })
+                    .catch(() => {
+                        mostrarToast('Error de conexión', 'bg-danger');
+                    });
+            }
+
+            function mostrarToast(mensaje, clase) {
+                const toastEl = document.getElementById('toast-notificacion');
+                toastEl.className = 'toast align-items-center text-white border-0 ' + clase;
+                document.getElementById('toast-mensaje').textContent = mensaje;
+                new bootstrap.Toast(toastEl, { delay: 3000 }).show();
+            }
+        });
+    </script>
+{% endblock %}

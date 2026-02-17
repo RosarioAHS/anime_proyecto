@@ -10,6 +10,7 @@ use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: RankingsRepository::class)]
 #[ORM\Table(name: 'rankings')]
+#[ORM\UniqueConstraint(name: 'usuario_categoria', columns: ['id_usuario', 'id_categoria'])] // 👈 NUEVO: evita duplicados
 class Rankings
 {
     #[ORM\Id]
@@ -20,6 +21,11 @@ class Rankings
     #[ORM\ManyToOne(targetEntity: Usuarios::class, inversedBy: 'rankings')]
     #[ORM\JoinColumn(name: 'id_usuario', nullable: false, onDelete: 'CASCADE')]
     private ?Usuarios $usuario = null;
+
+    // 👇 NUEVO: relación con categoría
+    #[ORM\ManyToOne(targetEntity: Categorias::class)]
+    #[ORM\JoinColumn(name: 'id_categoria', nullable: false)]
+    private ?Categorias $categoria = null;
 
     #[ORM\Column(length: 100)]
     private ?string $nombreRanking = null;
@@ -48,84 +54,35 @@ class Rankings
         $this->publico = true;
     }
 
-    public function getId(): ?int
+    // ... todos los getters/setters existentes ...
+
+    // 👇 NUEVO: getter y setter de categoría
+    public function getCategoria(): ?Categorias
     {
-        return $this->id;
+        return $this->categoria;
     }
 
-    public function getUsuario(): ?Usuarios
+    public function setCategoria(?Categorias $categoria): static
     {
-        return $this->usuario;
-    }
-
-    public function setUsuario(?Usuarios $usuario): static
-    {
-        $this->usuario = $usuario;
+        $this->categoria = $categoria;
         return $this;
     }
 
-    public function getNombreRanking(): ?string
-    {
-        return $this->nombreRanking;
-    }
-
-    public function setNombreRanking(string $nombreRanking): static
-    {
-        $this->nombreRanking = $nombreRanking;
-        return $this;
-    }
-
-    public function getDescripcion(): ?string
-    {
-        return $this->descripcion;
-    }
-
-    public function setDescripcion(?string $descripcion): static
-    {
-        $this->descripcion = $descripcion;
-        return $this;
-    }
-
-    public function isPublico(): ?bool
-    {
-        return $this->publico;
-    }
-
-    public function setPublico(bool $publico): static
-    {
-        $this->publico = $publico;
-        return $this;
-    }
-
-    public function getCreadoEn(): ?\DateTimeImmutable
-    {
-        return $this->creadoEn;
-    }
-
-    public function setCreadoEn(\DateTimeImmutable $creadoEn): static
-    {
-        $this->creadoEn = $creadoEn;
-        return $this;
-    }
-
-    public function getActualizadoEn(): ?\DateTimeImmutable
-    {
-        return $this->actualizadoEn;
-    }
-
-    public function setActualizadoEn(\DateTimeImmutable $actualizadoEn): static
-    {
-        $this->actualizadoEn = $actualizadoEn;
-        return $this;
-    }
-
-    /**
-     * @return Collection<int, RankingPeliculas>
-     */
-    public function getRankingPeliculas(): Collection
-    {
-        return $this->rankingPeliculas;
-    }
+    // ... resto de métodos existentes sin cambios ...
+    public function getId(): ?int { return $this->id; }
+    public function getUsuario(): ?Usuarios { return $this->usuario; }
+    public function setUsuario(?Usuarios $usuario): static { $this->usuario = $usuario; return $this; }
+    public function getNombreRanking(): ?string { return $this->nombreRanking; }
+    public function setNombreRanking(string $nombreRanking): static { $this->nombreRanking = $nombreRanking; return $this; }
+    public function getDescripcion(): ?string { return $this->descripcion; }
+    public function setDescripcion(?string $descripcion): static { $this->descripcion = $descripcion; return $this; }
+    public function isPublico(): ?bool { return $this->publico; }
+    public function setPublico(bool $publico): static { $this->publico = $publico; return $this; }
+    public function getCreadoEn(): ?\DateTimeImmutable { return $this->creadoEn; }
+    public function setCreadoEn(\DateTimeImmutable $creadoEn): static { $this->creadoEn = $creadoEn; return $this; }
+    public function getActualizadoEn(): ?\DateTimeImmutable { return $this->actualizadoEn; }
+    public function setActualizadoEn(\DateTimeImmutable $actualizadoEn): static { $this->actualizadoEn = $actualizadoEn; return $this; }
+    public function getRankingPeliculas(): Collection { return $this->rankingPeliculas; }
 
     public function addRankingPelicula(RankingPeliculas $rankingPelicula): static
     {

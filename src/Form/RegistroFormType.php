@@ -14,6 +14,7 @@ use Symfony\Component\Validator\Constraints\Email;
 use Symfony\Component\Validator\Constraints\Length;
 use Symfony\Component\Validator\Constraints\NotBlank;
 
+
 class RegistroFormType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void

@@ -12,6 +12,9 @@
                 <p class="text-white-50">Administra las categorías del sistema</p>
             </div>
             <div class="col-md-4 text-end">
+                <a href="{{ path('admin_categorias_gestionar') }}" class="btn btn-primary">
+                    <i class="fas fa-arrows-alt me-2"></i>Asignar elementos
+                </a>
                 <a href="{{ path('admin_categorias_nueva') }}" class="btn btn-success">
                     <i class="fas fa-plus me-2"></i>Nueva categoría
                 </a>
@@ -20,6 +23,7 @@
                 </a>
             </div>
         </div>
+
 
         {% if categorias is empty %}
             <div class="card shadow-lg">

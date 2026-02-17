@@ -58,7 +58,8 @@ class RankingsController extends AbstractController
     #[Route('/nuevo', name: 'rankings_nuevo', methods: ['GET', 'POST'])]
     public function nuevo(
         Request $request,
-        EntityManagerInterface $entityManager
+        EntityManagerInterface $entityManager,
+        RankingsRepository $rankingsRepository
     ): Response {
         $this->denyAccessUnlessGranted('ROLE_USER');
 
@@ -69,10 +70,25 @@ class RankingsController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+
+            // 👇 Verificar si ya existe un ranking del usuario para esa categoría
+            $rankingExistente = $rankingsRepository->findOneBy([
+                'usuario' => $this->getUser(),
+                'categoria' => $ranking->getCategoria()
+            ]);
+
+            if ($rankingExistente) {
+                $this->addFlash('warning',
+                    'Ya tienes un ranking para la categoría "' . $ranking->getCategoria()->getNombre() . '".
+                Puedes editarlo desde tu listado de rankings.'
+                );
+                return $this->redirectToRoute('rankings_index');
+            }
+
             $entityManager->persist($ranking);
             $entityManager->flush();
 
-            $this->addFlash('success', '¡Ranking creado exitosamente! Ahora puedes añadir películas.');
+            $this->addFlash('success', '¡Ranking creado! Ahora añade películas.');
             return $this->redirectToRoute('rankings_gestionar', ['id' => $ranking->getId()]);
         }
 
@@ -80,6 +96,7 @@ class RankingsController extends AbstractController
             'form' => $form,
         ]);
     }
+
 
     /**
      * Ver detalle de un ranking
@@ -112,7 +129,8 @@ class RankingsController extends AbstractController
             throw $this->createAccessDeniedException('No puedes editar este ranking');
         }
 
-        $form = $this->createForm(RankingFormType::class, $ranking);
+        // 👇 Pasar opción editar: true para deshabilitar el campo categoría
+        $form = $this->createForm(RankingFormType::class, $ranking, ['editar' => true]);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {

@@ -20,13 +20,106 @@
             </div>
         </div>
 
-        {% if peliculas is empty %}
-            <div class="alert alert-warning">
-                <i class="fas fa-exclamation-triangle me-2"></i>
-                No hay películas disponibles.
-                {% if is_granted('ROLE_ADMIN') %}
-                    <a href="{{ path('peliculas_importar') }}" class="alert-link">Haz clic aquí para importar películas desde la API.</a>
+        {# ===== BARRA DE BÚSQUEDA Y FILTROS ===== #}
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <form method="GET" action="{{ path('peliculas_index') }}" id="form-filtros">
+                    <div class="row g-3 align-items-end">
+
+                        {# Búsqueda por texto #}
+                        <div class="col-md-5">
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-search me-1"></i>Buscar
+                            </label>
+                            <div class="input-group">
+                                <input type="text"
+                                       name="busqueda"
+                                       class="form-control"
+                                       placeholder="Título o director..."
+                                       value="{{ busqueda }}">
+                                {% if busqueda %}
+                                    <a href="{{ path('peliculas_index', {'categoria': categoriaSeleccionada}) }}"
+                                       class="btn btn-outline-secondary" title="Limpiar búsqueda">
+                                        <i class="fas fa-times"></i>
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        {# Filtro por categoría #}
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-folder me-1"></i>Categoría
+                            </label>
+                            <select name="categoria" class="form-select" onchange="this.form.submit()">
+                                <option value="">Todas las categorías</option>
+                                {% for categoria in categorias %}
+                                    <option value="{{ categoria.id }}"
+                                        {{ categoriaSeleccionada == categoria.id ? 'selected' : '' }}>
+                                        {{ categoria.nombre }}
+                                        ({{ categoria.peliculas|length }})
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        {# Botones #}
+                        <div class="col-md-3">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-search me-1"></i>Buscar
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        {# ===== PESTAÑAS DE CATEGORÍAS ===== #}
+        <div class="mb-4">
+            <div class="d-flex flex-wrap gap-2">
+                <a href="{{ path('peliculas_index', {'busqueda': busqueda}) }}"
+                   class="btn btn-sm {{ categoriaSeleccionada is empty ? 'btn-primary' : 'btn-outline-primary' }}">
+                    <i class="fas fa-film me-1"></i>Todas
+                    <span class="badge bg-light text-dark ms-1">{{ peliculas|length }}</span>
+                </a>
+                {% for categoria in categorias %}
+                    <a href="{{ path('peliculas_index', {'categoria': categoria.id, 'busqueda': busqueda}) }}"
+                       class="btn btn-sm {{ categoriaSeleccionada == categoria.id ? 'btn-primary' : 'btn-outline-primary' }}">
+                        <i class="fas fa-folder me-1"></i>{{ categoria.nombre }}
+                        <span class="badge bg-light text-dark ms-1">{{ categoria.peliculas|length }}</span>
+                    </a>
+                {% endfor %}
+            </div>
+        </div>
+
+        {# ===== RESULTADO DE BÚSQUEDA ===== #}
+        {% if busqueda or categoriaSeleccionada %}
+            <div class="alert alert-info mb-3">
+                <i class="fas fa-filter me-2"></i>
+                Mostrando <strong>{{ peliculas|length }}</strong> resultado(s)
+                {% if busqueda %}
+                    para "<strong>{{ busqueda }}</strong>"
                 {% endif %}
+                {% if categoriaSeleccionada %}
+                    {% for categoria in categorias %}
+                        {% if categoria.id == categoriaSeleccionada %}
+                            en categoría "<strong>{{ categoria.nombre }}</strong>"
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
+                — <a href="{{ path('peliculas_index') }}" class="alert-link">Limpiar filtros</a>
+            </div>
+        {% endif %}
+
+        {# ===== GRID DE PELÍCULAS ===== #}
+        {% if peliculas is empty %}
+            <div class="text-center py-5">
+                <i class="fas fa-search fa-4x text-muted mb-3"></i>
+                <h4 class="text-white">No se encontraron películas</h4>
+                <p class="text-white-50">Intenta con otros términos de búsqueda o categoría</p>
+                <a href="{{ path('peliculas_index') }}" class="btn btn-primary">
+                    <i class="fas fa-times me-1"></i>Limpiar filtros
+                </a>
             </div>
         {% else %}
             <div class="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-4">
@@ -34,15 +127,26 @@
                     <div class="col">
                         <div class="card h-100 shadow-sm hover-shadow">
                             {% if pelicula.imagenUrl %}
-                                <img src="{{ pelicula.imagenUrl }}" class="card-img-top" alt="{{ pelicula.titulo }}" style="height: 300px; object-fit: cover;">
+                                <img src="{{ pelicula.imagenUrl }}"
+                                     class="card-img-top"
+                                     alt="{{ pelicula.titulo }}"
+                                     style="height: 300px; object-fit: cover;">
                             {% else %}
-                                <div class="bg-secondary text-white d-flex align-items-center justify-content-center" style="height: 300px;">
+                                <div class="bg-secondary text-white d-flex align-items-center justify-content-center"
+                                     style="height: 300px;">
                                     <i class="fas fa-film fa-4x"></i>
                                 </div>
                             {% endif %}
 
                             <div class="card-body d-flex flex-column">
                                 <h5 class="card-title">{{ pelicula.titulo }}</h5>
+
+                                {# Categoría badge #}
+                                {% if pelicula.categoria %}
+                                    <span class="badge bg-primary mb-2" style="width: fit-content;">
+                                    <i class="fas fa-folder me-1"></i>{{ pelicula.categoria.nombre }}
+                                </span>
+                                {% endif %}
 
                                 <p class="text-muted small mb-2">
                                     <i class="fas fa-user me-1"></i>{{ pelicula.director }}<br>
@@ -51,7 +155,7 @@
                                     {% endif %}
                                 </p>
 
-                                <!-- Rating -->
+                                {# Rating #}
                                 <div class="mb-2">
                                     {% if pelicula.contadorRating > 0 %}
                                         <div class="d-flex align-items-center">
@@ -78,7 +182,8 @@
                                     {% endif %}
                                 </div>
 
-                                <a href="{{ path('peliculas_show', {'id': pelicula.id}) }}" class="btn btn-primary mt-auto">
+                                <a href="{{ path('peliculas_show', {'id': pelicula.id}) }}"
+                                   class="btn btn-primary mt-auto">
                                     <i class="fas fa-eye me-1"></i>Ver detalles
                                 </a>
                             </div>
@@ -89,21 +194,23 @@
         {% endif %}
     </div>
 
-    {% block stylesheets %}
-        {{ parent() }}
-        <style>
-            /* Añadí una sombra cuando pasas el mouse por encima */
-            /* Lo encontré en un tutorial de Bootstrap */
-            .hover-shadow:hover {
-                box-shadow: 0 5px 15px rgba(0,0,0,0.3) !important;
-            }
+{% endblock %}
 
-            /* Me costó centrar el título, probé varias cosas */
-            .card-title {
-                font-size: 1.1rem;
-                font-weight: bold;
-                min-height: 50px;
-            }
-        </style>
-    {% endblock %}
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .hover-shadow:hover {
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3) !important;
+            transform: translateY(-2px);
+            transition: all 0.2s ease;
+        }
+        .card {
+            transition: all 0.2s ease;
+        }
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: bold;
+            min-height: 50px;
+        }
+    </style>
 {% endblock %}

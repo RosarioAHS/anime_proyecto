@@ -251,4 +251,61 @@ class AdminController extends AbstractController
             'usuarios' => $usuarios,
         ]);
     }
+
+    /**
+     * Vista drag & drop para asignar películas a categorías
+     */
+    #[Route('/categorias/gestionar', name: 'admin_categorias_gestionar')]
+    public function gestionarCategorias(
+        PeliculasRepository $peliculasRepository,
+        EntityManagerInterface $entityManager
+    ): Response {
+        if (!$this->getUser() || !$this->getUser()->isAdmin()) {
+            return $this->redirectToRoute('app_login');
+        }
+
+        $peliculas = $peliculasRepository->findAll();
+        $categorias = $entityManager->getRepository(\App\Entity\Categorias::class)->findAll();
+
+        return $this->render('admin/categorias/gestionar.html.twig', [
+            'peliculas' => $peliculas,
+            'categorias' => $categorias,
+        ]);
+    }
+
+    /**
+     * API para guardar asignación de película a categoría via AJAX
+     */
+    #[Route('/categorias/asignar-pelicula', name: 'admin_asignar_categoria', methods: ['POST'])]
+    public function asignarCategoria(
+        Request $request,
+        PeliculasRepository $peliculasRepository,
+        EntityManagerInterface $entityManager
+    ): Response {
+        if (!$this->getUser() || !$this->getUser()->isAdmin()) {
+            return $this->json(['error' => 'Sin permisos'], 403);
+        }
+
+        $data = json_decode($request->getContent(), true);
+
+        $pelicula = $peliculasRepository->find($data['peliculaId']);
+        if (!$pelicula) {
+            return $this->json(['error' => 'Película no encontrada'], 404);
+        }
+
+        if ($data['categoriaId'] === null) {
+            $pelicula->setCategoria(null);
+        } else {
+            $categoria = $entityManager->getRepository(\App\Entity\Categorias::class)->find($data['categoriaId']);
+            if (!$categoria) {
+                return $this->json(['error' => 'Categoría no encontrada'], 404);
+            }
+            $pelicula->setCategoria($categoria);
+        }
+
+        $pelicula->setActualizadoEn(new \DateTimeImmutable());
+        $entityManager->flush();
+
+        return $this->json(['success' => true]);
+    }
 }
