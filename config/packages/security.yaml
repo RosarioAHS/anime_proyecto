@@ -40,7 +40,7 @@ security:
         - { path: ^/registro, roles: PUBLIC_ACCESS }
         - { path: ^/peliculas$, roles: PUBLIC_ACCESS }
         - { path: ^/peliculas/\d+$, roles: PUBLIC_ACCESS }
-        - { path: ^/admin/estadisticas, roles: ROLE_USER }
+        - { path: ^/admin/estadisticas, roles: PUBLIC_ACCESS }
 
         # Rutas que requieren autenticación
         - { path: ^/valoraciones, roles: ROLE_USER }

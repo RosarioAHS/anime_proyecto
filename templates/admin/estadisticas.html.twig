@@ -24,7 +24,7 @@
             </div>
         </div>
 
-        <!-- Estadística 1: Número total de valoraciones -->
+        {# ===== 1. NÚMERO TOTAL DE VALORACIONES ===== #}
         <div class="card shadow-lg mb-4">
             <div class="card-header bg-primary text-white">
                 <h5 class="mb-0">
@@ -32,14 +32,12 @@
                 </h5>
             </div>
             <div class="card-body text-center">
-                <h1 class="display-3 text-primary">
-                    {{ top_peliculas|reduce((carry, p) => carry + p.contadorRating, 0) }}
-                </h1>
+                <h1 class="display-3 text-primary">{{ total_valoraciones }}</h1>
                 <p class="text-muted mb-0">valoraciones realizadas en total</p>
             </div>
         </div>
 
-
+        {# ===== 2. PROMEDIO POR CATEGORÍA ===== #}
         <div class="card shadow-lg mb-4">
             <div class="card-header bg-success text-white">
                 <h5 class="mb-0">
@@ -47,51 +45,63 @@
                 </h5>
             </div>
             <div class="card-body">
-                <div class="row">
-                    <div class="col-md-6 offset-md-3 text-center">
-                        <h3 class="mb-3">Categoría: Películas</h3>
-                        {% set suma_ratings = 0 %}
-                        {% set cantidad_peliculas = 0 %}
-                        {% for pelicula in top_peliculas %}
-                            {% if pelicula.contadorRating > 0 %}
-                                {% set suma_ratings = suma_ratings + pelicula.promedioRating %}
-                                {% set cantidad_peliculas = cantidad_peliculas + 1 %}
-                            {% endif %}
+                {% if promedios_por_categoria is empty %}
+                    <p class="text-muted text-center">No hay categorías disponibles</p>
+                {% else %}
+                    <div class="row g-3">
+                        {% for categoria in promedios_por_categoria %}
+                            <div class="col-md-6 col-lg-4">
+                                <div class="card border h-100">
+                                    <div class="card-body text-center">
+                                        <h5 class="card-title">
+                                            <i class="fas fa-folder text-primary me-2"></i>
+                                            {{ categoria.nombre }}
+                                        </h5>
+
+                                        {% if categoria.promedio > 0 %}
+                                            <h2 class="text-success display-5">
+                                                {{ categoria.promedio|number_format(2) }}
+                                            </h2>
+                                            <p class="text-muted small">sobre 5 estrellas</p>
+
+                                            {# Estrellas visuales #}
+                                            <div class="text-warning mb-2" style="font-size: 1.3rem;">
+                                                {% for i in 1..5 %}
+                                                    {% if i <= categoria.promedio %}
+                                                        <i class="fas fa-star"></i>
+                                                    {% elseif i - 0.5 <= categoria.promedio %}
+                                                        <i class="fas fa-star-half-alt"></i>
+                                                    {% else %}
+                                                        <i class="far fa-star"></i>
+                                                    {% endif %}
+                                                {% endfor %}
+                                            </div>
+
+                                            <div class="text-muted small">
+                                            <span class="badge bg-primary me-1">
+                                                {{ categoria.total_valoraciones }} valoraciones
+                                            </span>
+                                                <span class="badge bg-secondary">
+                                                {{ categoria.peliculas_valoradas }}/{{ categoria.total_peliculas }} películas valoradas
+                                            </span>
+                                            </div>
+                                        {% else %}
+                                            <p class="text-muted">
+                                                <i class="fas fa-inbox fa-2x d-block mb-2"></i>
+                                                Sin valoraciones aún
+                                            </p>
+                                            <small class="text-muted">{{ categoria.total_peliculas }} películas en esta categoría</small>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
                         {% endfor %}
-
-                        {% if cantidad_peliculas > 0 %}
-                            {% set promedio_categoria = suma_ratings / cantidad_peliculas %}
-                            <div class="mb-3">
-                                <h1 class="display-4 text-success">
-                                    {{ promedio_categoria|number_format(2) }}
-                                </h1>
-                                <p class="text-muted">sobre 5 estrellas</p>
-                            </div>
-
-                            <!-- Mostrar estrellas visuales -->
-                            <div class="text-warning" style="font-size: 2rem;">
-                                {% for i in 1..5 %}
-                                    {% if i <= promedio_categoria %}
-                                        <i class="fas fa-star"></i>
-                                    {% elseif i - 0.5 <= promedio_categoria %}
-                                        <i class="fas fa-star-half-alt"></i>
-                                    {% else %}
-                                        <i class="far fa-star"></i>
-                                    {% endif %}
-                                {% endfor %}
-                            </div>
-
-                            <p class="text-muted mt-3">
-                                Basado en {{ cantidad_peliculas }} películas valoradas
-                            </p>
-                        {% else %}
-                            <p class="text-muted">No hay películas valoradas aún</p>
-                        {% endif %}
                     </div>
-                </div>
+                {% endif %}
             </div>
         </div>
 
+        {# ===== 3. TOP 10 PELÍCULAS MÁS VALORADAS ===== #}
         <div class="card shadow-lg mb-4">
             <div class="card-header bg-warning text-dark">
                 <h5 class="mb-0">
@@ -111,6 +121,7 @@
                             <tr>
                                 <th style="width: 60px;">Posición</th>
                                 <th>Película</th>
+                                <th>Categoría</th>
                                 <th>Director</th>
                                 <th class="text-center">Rating Promedio</th>
                                 <th class="text-center">Nº Valoraciones</th>
@@ -119,27 +130,31 @@
                             <tbody>
                             {% for pelicula in top_peliculas %}
                                 <tr>
-                                    <td>
-                                        <div class="text-center">
-                                            {% if loop.index == 1 %}
-                                                <i class="fas fa-medal text-warning fa-2x" title="1er lugar"></i>
-                                            {% elseif loop.index == 2 %}
-                                                <i class="fas fa-medal text-secondary fa-2x" title="2do lugar"></i>
-                                            {% elseif loop.index == 3 %}
-                                                <i class="fas fa-medal fa-2x" style="color: #cd7f32;" title="3er lugar"></i>
-                                            {% else %}
-                                                <span class="badge bg-primary">{{ loop.index }}</span>
-                                            {% endif %}
-                                        </div>
+                                    <td class="text-center">
+                                        {% if loop.index == 1 %}
+                                            <i class="fas fa-medal text-warning fa-2x" title="1er lugar"></i>
+                                        {% elseif loop.index == 2 %}
+                                            <i class="fas fa-medal text-secondary fa-2x" title="2do lugar"></i>
+                                        {% elseif loop.index == 3 %}
+                                            <i class="fas fa-medal fa-2x" style="color: #cd7f32;" title="3er lugar"></i>
+                                        {% else %}
+                                            <span class="badge bg-primary">{{ loop.index }}</span>
+                                        {% endif %}
                                     </td>
+                                    <td><strong>{{ pelicula.titulo }}</strong></td>
                                     <td>
-                                        <strong>{{ pelicula.titulo }}</strong>
+                                        {% if pelicula.categoria %}
+                                            <span class="badge bg-primary">{{ pelicula.categoria.nombre }}</span>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
                                     </td>
                                     <td>{{ pelicula.director }}</td>
                                     <td class="text-center">
                                         {% if pelicula.contadorRating > 0 %}
                                             <span class="text-warning">
-                                                <i class="fas fa-star"></i> {{ pelicula.promedioRating|number_format(2) }}
+                                                <i class="fas fa-star"></i>
+                                                {{ pelicula.promedioRating|number_format(2) }}
                                             </span>
                                         {% else %}
                                             <span class="text-muted">-</span>
@@ -157,9 +172,69 @@
             </div>
         </div>
 
-        <div class="alert alert-info">
-            <i class="fas fa-info-circle me-2"></i>
-            <strong>Nota:</strong> Las estadísticas se actualizan automáticamente cada vez que un usuario valora una película.
+        {# ===== 4. TOP 10 MEJOR PUNTUADAS ===== #}
+        <div class="card shadow-lg mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-star me-2"></i>Películas Mejor Puntuadas (Top 10)
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if mejor_puntuadas is empty %}
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-inbox fa-3x mb-3"></i>
+                        <p>No hay suficientes valoraciones todavía</p>
+                    </div>
+                {% else %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                            <tr>
+                                <th style="width: 60px;">Posición</th>
+                                <th>Película</th>
+                                <th>Categoría</th>
+                                <th class="text-center">Rating</th>
+                                <th class="text-center">Valoraciones</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for pelicula in mejor_puntuadas %}
+                                <tr>
+                                    <td class="text-center">
+                                        {% if loop.index == 1 %}
+                                            <i class="fas fa-medal text-warning fa-2x"></i>
+                                        {% elseif loop.index == 2 %}
+                                            <i class="fas fa-medal text-secondary fa-2x"></i>
+                                        {% elseif loop.index == 3 %}
+                                            <i class="fas fa-medal fa-2x" style="color: #cd7f32;"></i>
+                                        {% else %}
+                                            <span class="badge bg-info">{{ loop.index }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td><strong>{{ pelicula.titulo }}</strong></td>
+                                    <td>
+                                        {% if pelicula.categoria %}
+                                            <span class="badge bg-primary">{{ pelicula.categoria.nombre }}</span>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="text-warning">
+                                            <i class="fas fa-star"></i>
+                                            {{ pelicula.promedioRating|number_format(2) }}
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge bg-primary">{{ pelicula.contadorRating }}</span>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% endif %}
+            </div>
         </div>
     </div>
 {% endblock %}

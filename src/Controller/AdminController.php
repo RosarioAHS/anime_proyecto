@@ -17,33 +17,68 @@ use Symfony\Component\Routing\Attribute\Route;
 #[Route('/admin')]
 class AdminController extends AbstractController
 {
-    /**
-     * Dashboard principal del administrador
-     */
     #[Route('/', name: 'admin_dashboard')]
     public function dashboard(
         PeliculasRepository $peliculasRepository,
         UsuariosRepository $usuariosRepository,
         ValoracionesRepository $valoracionesRepository,
-        RankingsRepository $rankingsRepository
+        RankingsRepository $rankingsRepository,
+        EntityManagerInterface $entityManager
     ): Response {
-        // Verifico que sea admin
         if (!$this->getUser() || !$this->getUser()->isAdmin()) {
             $this->addFlash('error', 'No tienes permisos para acceder aquí');
             return $this->redirectToRoute('peliculas_index');
         }
 
-        // Cuento totales de forma simple
+        // Totales
         $totalPeliculas = count($peliculasRepository->findAll());
         $totalUsuarios = count($usuariosRepository->findAll());
         $totalValoraciones = count($valoracionesRepository->findAll());
         $totalRankings = count($rankingsRepository->findAll());
+        $totalCategorias = count($entityManager->getRepository(\App\Entity\Categorias::class)->findAll());
+
+        // Películas sin categoría
+        $sinCategoria = count($peliculasRepository->findBy(['categoria' => null]));
+
+        // Últimas valoraciones (5 más recientes)
+        $ultimasValoraciones = $valoracionesRepository->findBy(
+            [],
+            ['creadoEn' => 'DESC'],
+            5
+        );
+
+        // Usuarios más activos (top 5)
+        $todosUsuarios = $usuariosRepository->findAll();
+        $usuariosActivos = [];
+        foreach ($todosUsuarios as $usuario) {
+            $cantidad = count($usuario->getValoraciones());
+            if ($cantidad > 0) {
+                $usuariosActivos[] = [
+                    'nombre' => $usuario->getNombreUsuario(),
+                    'valoraciones' => $cantidad
+                ];
+            }
+        }
+        usort($usuariosActivos, fn($a, $b) => $b['valoraciones'] <=> $a['valoraciones']);
+        $usuariosActivos = array_slice($usuariosActivos, 0, 5);
+
+        // Top 5 películas mejor valoradas
+        $todasPeliculas = $peliculasRepository->findBy([], ['promedioRating' => 'DESC']);
+        $topPeliculas = array_slice(
+            array_filter($todasPeliculas, fn($p) => $p->getContadorRating() > 0),
+            0, 5
+        );
 
         return $this->render('admin/dashboard.html.twig', [
             'total_peliculas' => $totalPeliculas,
             'total_usuarios' => $totalUsuarios,
             'total_valoraciones' => $totalValoraciones,
             'total_rankings' => $totalRankings,
+            'total_categorias' => $totalCategorias,
+            'sin_categoria' => $sinCategoria,
+            'ultimas_valoraciones' => $ultimasValoraciones,
+            'usuarios_activos' => $usuariosActivos,
+            'top_peliculas' => $topPeliculas,
         ]);
     }
 
@@ -149,26 +184,30 @@ class AdminController extends AbstractController
     }
 
     /**
-     * Estadísticas del sistema
+     * Estadisticas del sistema
      */
     #[Route('/estadisticas', name: 'admin_estadisticas')]
     public function estadisticas(
         PeliculasRepository $peliculasRepository,
         ValoracionesRepository $valoracionesRepository,
-        UsuariosRepository $usuariosRepository
+        UsuariosRepository $usuariosRepository,
+        EntityManagerInterface $entityManager
     ): Response {
-        // Top 10 películas más valoradas
-        // Lo hago simple: traigo todas y las ordeno con PHP
         $todasPeliculas = $peliculasRepository->findAll();
+
+        // Total de valoraciones
+        $totalValoraciones = count($valoracionesRepository->findAll());
+
+        // Top 10 películas más valoradas
         usort($todasPeliculas, function($a, $b) {
             return $b->getContadorRating() <=> $a->getContadorRating();
         });
         $topPeliculas = array_slice($todasPeliculas, 0, 10);
 
-        // Top 10 mejor puntuadas (con al menos 3 valoraciones)
+        // Top 10 mejor puntuadas (con al menos 1 valoración)
         $mejorPuntuadas = [];
         foreach ($todasPeliculas as $pelicula) {
-            if ($pelicula->getContadorRating() >= 3) {
+            if ($pelicula->getContadorRating() > 0) {
                 $mejorPuntuadas[] = $pelicula;
             }
         }
@@ -177,32 +216,50 @@ class AdminController extends AbstractController
         });
         $mejorPuntuadas = array_slice($mejorPuntuadas, 0, 10);
 
+        // Promedio de puntuaciones por categoría
+        $categorias = $entityManager->getRepository(\App\Entity\Categorias::class)->findAll();
+        $promediosPorCategoria = [];
+        foreach ($categorias as $categoria) {
+            $sumaPromedio = 0;
+            $cantidadValoradas = 0;
+            $totalValoracionesCategoria = 0;
+
+            foreach ($categoria->getPeliculas() as $pelicula) {
+                if ($pelicula->getContadorRating() > 0) {
+                    $sumaPromedio += $pelicula->getPromedioRating();
+                    $cantidadValoradas++;
+                    $totalValoracionesCategoria += $pelicula->getContadorRating();
+                }
+            }
+
+            $promediosPorCategoria[] = [
+                'nombre' => $categoria->getNombre(),
+                'promedio' => $cantidadValoradas > 0 ? $sumaPromedio / $cantidadValoradas : 0,
+                'total_valoraciones' => $totalValoracionesCategoria,
+                'peliculas_valoradas' => $cantidadValoradas,
+                'total_peliculas' => count($categoria->getPeliculas()),
+            ];
+        }
+
         // Usuarios más activos
-        // Lo hago contando manualmente
         $todosUsuarios = $usuariosRepository->findAll();
         $usuariosActivos = [];
-
         foreach ($todosUsuarios as $usuario) {
-            $cantidadValoraciones = count($usuario->getValoraciones());
-            if ($cantidadValoraciones > 0) {
+            $cantidad = count($usuario->getValoraciones());
+            if ($cantidad > 0) {
                 $usuariosActivos[] = [
                     'nombreUsuario' => $usuario->getNombreUsuario(),
-                    'total_valoraciones' => $cantidadValoraciones
+                    'total_valoraciones' => $cantidad
                 ];
             }
         }
-
-        // Ordeno por cantidad de valoraciones
         usort($usuariosActivos, function($a, $b) {
             return $b['total_valoraciones'] <=> $a['total_valoraciones'];
         });
         $usuariosActivos = array_slice($usuariosActivos, 0, 10);
 
         // Distribución de puntuaciones
-        // Traigo todas las valoraciones y las cuento con PHP
         $todasValoraciones = $valoracionesRepository->findAll();
-
-        // Array para contar cada puntuación
         $distribucionPuntuaciones = [
             ['puntuacion' => '1', 'cantidad' => 0],
             ['puntuacion' => '2', 'cantidad' => 0],
@@ -210,8 +267,6 @@ class AdminController extends AbstractController
             ['puntuacion' => '4', 'cantidad' => 0],
             ['puntuacion' => '5', 'cantidad' => 0],
         ];
-
-        // Cuento las valoraciones
         foreach ($todasValoraciones as $valoracion) {
             $puntuacion = (int)round($valoracion->getPuntuacion());
             if ($puntuacion >= 1 && $puntuacion <= 5) {
@@ -220,19 +275,16 @@ class AdminController extends AbstractController
         }
 
         // Películas sin valoraciones
-        $sinValoraciones = [];
-        foreach ($todasPeliculas as $pelicula) {
-            if ($pelicula->getContadorRating() == 0) {
-                $sinValoraciones[] = $pelicula;
-            }
-        }
+        $sinValoraciones = array_filter($todasPeliculas, fn($p) => $p->getContadorRating() == 0);
 
-        return $this->render('admin/estadisticas.html.twig', [
+        return $this->render('admin/estadisticas.html.twig', [  // 👈 ruta corregida
             'top_peliculas' => $topPeliculas,
             'mejor_puntuadas' => $mejorPuntuadas,
             'usuarios_activos' => $usuariosActivos,
             'distribucion_puntuaciones' => $distribucionPuntuaciones,
             'sin_valoraciones' => $sinValoraciones,
+            'total_valoraciones' => $totalValoraciones,
+            'promedios_por_categoria' => $promediosPorCategoria,
         ]);
     }
 
